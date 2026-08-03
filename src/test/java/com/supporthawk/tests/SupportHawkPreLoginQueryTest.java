@@ -7,15 +7,15 @@ import com.supporthawk.pages.QueryPage;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
+import com.supporthawk.utils.KeywordValidator;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Data-driven UI test for the SupportHawk Query page.
  * Each row from fintech_queries.json becomes one TestNG test run.
  */
-public class QueryTest extends BasePage {
+public class SupportHawkPreLoginQueryTest extends BasePage {
 
     /**
      * DataProvider that reads queries from fintech_queries.json and filters
@@ -97,7 +97,7 @@ public class QueryTest extends BasePage {
      *
      * @param queryModel one query + expected keywords from the DataProvider
      */
-    @Test(dataProvider = "queryData", groups = {"smoke", "regression", "ui"},
+    @Test(dataProvider = "queryData",
             description = "Verify Query page responses contain enough expected keywords")
     public void verifyQueryResponse(QueryModel queryModel) {
         QueryPage queryPage = new QueryPage(page);
@@ -111,47 +111,21 @@ public class QueryTest extends BasePage {
         // Get the list of expected keywords from the JSON
         List<String> expectedKeywords = queryModel.getExpected();
 
-        // Compare using lowercase so "Savings" and "savings" both count as a match
-        String responseLower = response.toLowerCase();
+        List<String> matchedKeywords =
+        KeywordValidator.findMatchedKeywords(response, expectedKeywords);
 
-        // Collect every keyword that was actually found in the response
-        List<String> matchedKeywords = new ArrayList<>();
-        for (int i = 0; i < expectedKeywords.size(); i++) {
-            String keyword = expectedKeywords.get(i);
-            if (responseLower.contains(keyword.toLowerCase())) {
-                matchedKeywords.add(keyword);
-            }
-        }
-
-        // Decide how many matches are required:
-        // - one keyword in JSON  → must find that 1
-        // - multiple keywords    → must find at least 2
-        int requiredMatches;
-        if (expectedKeywords.size() == 1) {
-            requiredMatches = 1;
-        } else {
-            requiredMatches = 2;
-        }
+        int requiredMatches = KeywordValidator.findMatchedKeywords(response, expectedKeywords).size();
 
         int totalMatched = matchedKeywords.size();
         int totalExpected = expectedKeywords.size();
 
         // Print a clear debug block so failures are easy to investigate
         System.out.println("--------------------------------------------------");
-        System.out.println("Question:");
-        System.out.println(queryModel.getQuery());
-        System.out.println();
-        System.out.println("Expected keywords:");
-        System.out.println(expectedKeywords);
-        System.out.println();
-        System.out.println("Matched keywords:");
-        System.out.println(matchedKeywords);
-        System.out.println();
-        System.out.println("Total matched:");
-        System.out.println(totalMatched + " of " + totalExpected);
-        System.out.println();
-        System.out.println("Response:");
-        System.out.println(response);
+        System.out.println("Query: " + queryModel.getQuery());
+        System.out.println("Expected: " + expectedKeywords);
+        System.out.println("Matched: " + matchedKeywords);
+        System.out.println("Match count: " + totalMatched + "/" + totalExpected);
+        System.out.println("Response: " + response);
         System.out.println("--------------------------------------------------");
 
         // Pass only if we found enough keywords
