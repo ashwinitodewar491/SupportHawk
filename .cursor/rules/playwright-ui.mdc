@@ -1,0 +1,16 @@
+---
+description: Java + TestNG UI test conventions for this project (Playwright)
+alwaysApply: false
+globs: src/test/java/**/*.java
+---
+
+Full reference: `skills.md` at the project root, and `.claude/skills/playwright-ui-automation/` for detailed docs (dos-and-donts.md, locator-strategy.md, assertion-rules.md, code-review-checklist.md).
+
+Summary:
+- Every locator lives in a page object under `pages/` — never inline in a test class.
+- Locator preference: `getBy*` role/label/text → `data-testid` → id/CSS as a documented last resort. No XPath.
+- Never `page.waitForTimeout(...)` — rely on Playwright's auto-waiting or `PlaywrightAssertions.assertThat(...)`.
+- One page object per screen, one test class per feature/flow, extending `BasePage`.
+- Every `@Test` has `groups = {...}` including `ui`; `smoke` tests also get `regression`.
+- TestNG only — no JUnit. No hardcoded hosts — always `AppConfig.BASE_URL`.
+- Before finalizing generated code, check it against `.claude/skills/playwright-ui-automation/code-review-checklist.md`.

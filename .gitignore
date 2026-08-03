@@ -4,3 +4,5 @@ target/
 *.iml
 .vscode/
 ms-playwright/
+.env
+*.env
