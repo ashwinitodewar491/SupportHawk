@@ -1,10 +1,11 @@
-package com.supporthawk.pages;
+package com.supporthawk.base;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.supporthawk.config.AppConfig;
 import com.supporthawk.utils.ScreenshotUtil;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
@@ -16,6 +17,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+/** Every UI test class extends this. Do not modify for individual test needs — page objects and
+ * test classes should only ever use the {@code page} field this sets up. */
 public class BasePage {
 
     protected Playwright playwright;
@@ -26,7 +29,7 @@ public class BasePage {
     @BeforeMethod(alwaysRun = true)
     public void setUpBrowser() {
         playwright = Playwright.create();
-        boolean headless = Boolean.parseBoolean(System.getProperty("headless", "true"));
+        boolean headless = AppConfig.isHeadless();
         double slowMo = headless ? 0 : 800;
 
         browser = playwright.chromium().launch(
@@ -50,13 +53,20 @@ public class BasePage {
                 if (page.video() != null) {
                     videoPath = page.video().path();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
             page.close();
         }
 
-        if (context != null) context.close(); // closing context finalizes the video file
-        if (browser != null) browser.close();
-        if (playwright != null) playwright.close();
+        if (context != null) {
+            context.close();
+        }
+        if (browser != null) {
+            browser.close();
+        }
+        if (playwright != null) {
+            playwright.close();
+        }
 
         if (videoPath != null) {
             try {
@@ -67,7 +77,8 @@ public class BasePage {
                 } else {
                     Files.deleteIfExists(videoPath);
                 }
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
         }
     }
 }

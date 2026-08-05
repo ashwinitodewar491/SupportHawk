@@ -14,7 +14,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <playwright.version>1.50.0</playwright.version>
         <testGroups></testGroups>
-        <suiteXmlFile>testng.xml</suiteXmlFile>
     </properties>
 
     <dependencies>
@@ -49,10 +48,6 @@
                 <version>3.2.5</version>
 
                 <configuration>
-                    <suiteXmlFiles>
-                        <suiteXmlFile>${suiteXmlFile}</suiteXmlFile>
-                    </suiteXmlFiles>
-                    <groups>${testGroups}</groups>
                     <testFailureIgnore>true</testFailureIgnore>
                 </configuration>
 

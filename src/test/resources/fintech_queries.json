@@ -1,0 +1,142 @@
+[
+  {
+    "query": "What is the rate of interest for Home Loan?",
+    "expected": ["Minimum Interest Rate(%)","Maximum Interest Rate(%)","Loan Amount","home loans", "fixed", "floating", "interest rate", "repayment tenure"],
+    "tags": ["smoke", "regression"]
+  },
+  {
+    "query": "What are Bandhan Bank's working hours?",
+    "expected": ["working hours","9:30 am","4:30 pm", "Monday to Saturday"],
+    "tags": ["regression"]
+  },
+  {
+    "query": "How can I open a savings account?",
+    "expected": ["passport", "identity proof", "pan", "aadhaar","Identity proof"],
+    "tags": ["smoke", "regression"]
+  },
+  {
+    "query": "What documents are required to open a savings account?",
+    "expected": ["passport", "identity proof", "pan", "aadhaar","Identity proof"],
+    "tags": ["smoke", "regression"]
+  },
+  {
+    "query": "Can I open a savings account online?",
+    "expected": ["online"],
+    "tags": ["regression"]
+  },
+  {
+    "query": "What are the interest rates on Tax Saver FD?",
+    "expected": ["Tax Saver Fixed Deposit", "TD Type","Non-Senior Citizens","Senior Citizens"],
+    "tags": ["smoke","regression"]
+  },
+  {
+    "query": "What is the minimum amount required for Tax Saver FD?",
+    "expected": ["minimum","Tax Saver","1,000"],
+    "tags": ["smoke","regression"]
+  },
+  {
+    "query": "Can I close my FD before maturity?",
+    "expected": ["Yes","premature","partial","withdrawal","penalty","interest rate"],
+    "tags": ["smoke", "regression"]
+  },
+  {
+    "query": "How do I open a recurring deposit?",
+    "expected": ["Recurring Deposit","recurring deposit",
+    "open recurring deposit",
+    "deposits",
+    "discover products",
+    "casa account",
+    "product",
+    "installment amount",
+    "maturity amount",
+    "tenure",
+    "holding pattern",
+    "nominee",
+    "ok",
+    "consent"],
+    "tags": ["smoke", "regression"]
+  },
+  {
+    "query": "How can I apply for a debit card?",
+    "expected": ["hamburger menu","Apply Debit Card","Confirm","Internet Banking","Submit","debit card",
+    "internet banking",
+    "apply for new debit card",
+    "apply debit card",
+    "drop-down",
+    "t&c",
+    "submit",
+    "confirm",
+    "discover products"],
+    "tags": ["smoke", "regression"]
+  },
+  {
+    "query": "How do I regenerate my debit card PIN?",
+    "expected": ["debit card", "generate pin", "cards", "debit cards", "quick links", "card expiry", "cvv", "date of birth", "pan", "validate", "new debit card pin", "submit", "otp", "registered mobile number", "successful"],
+    "tags": ["smoke", "regression"]
+  },
+  {
+    "query": "What are the daily transaction limits?",
+    "expected": ["daily transaction limits",
+    "debit card",
+    "legacy debit card",
+    "avni debit card",
+    "mastercard platinum",
+    "atm cash withdrawal",
+    "purchase transaction limit",
+    "1,00,000",
+    "10,00,000",
+    "50,000",
+    "3 lakh",
+    "2 lakh",
+    "6 lakh",
+    "internet banking",
+    "mobile banking",
+    "branch"],
+    "tags": ["smoke", "regression"]
+  },
+  {
+    "query": "Can I increase the ATM limit?",
+    "expected": ["yes","increase",
+    "decrease",
+    "transaction limit",
+    "debit card",
+    "internet banking",
+    "mobile banking",
+    "branch",
+    "maximum permissible"],
+    "tags": ["regression"]
+  },
+  {
+    "query": "What documents are required for Re-KYC?",
+    "expected": ["re-kyc",
+    "photograph",
+    "address proof",
+    "identity proof",
+    "aadhaar",
+    "passport",
+    "driving licence",
+    "voter id"],
+    "tags": ["regression"]
+  },
+  {
+    "query": "I am a freelancer whose income fluctuates between ₹25,000 and ₹80,000 each month. What is the best way to maintain consistency in my savings without defaulting on my monthly SIPs?",
+    "expected": ["10%",
+    "sip",
+    "skip",
+    "pause",
+    "step up",
+    "top up",
+    "increase",
+    "invest"],
+    "tags": ["regression"]
+  },
+  {
+    "query": "Is Video KYC secure?",
+    "expected": ["yes", "video kyc",
+    "secure",
+    "encrypted",
+    "otp verification",
+    "video verification"],
+    "tags": ["regression"]
+  }
+]

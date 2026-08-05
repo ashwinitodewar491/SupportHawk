@@ -7,9 +7,9 @@
         <listener class-name="com.supporthawk.listeners.TestListener"/>
     </listeners>
 
-    <test name="SupportHawk Tests">
+    <test name="UI Tests">
         <classes>
-            <class name="com.supporthawk.tests.SampleTest"/>
+            <class name="com.supporthawk.tests.SupportHawkPreLoginQueryTest"/>
         </classes>
     </test>
 
