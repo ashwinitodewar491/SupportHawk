@@ -6,7 +6,7 @@ public final class AppConfig {
     private AppConfig() {
     }
 
-    public static final String BASE_URL = "https://supporthawk.joshsoftware.com";
+    public static final String BASE_URL = ConfigReader.get("base.url");
 
     public static boolean isHeadless() {
         return Boolean.parseBoolean(System.getProperty("headless", "false"));

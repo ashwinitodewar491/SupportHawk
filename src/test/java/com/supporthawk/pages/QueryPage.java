@@ -4,6 +4,13 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.supporthawk.config.AppConfig;
+import com.supporthawk.config.ConfigReader;
+import com.supporthawk.utils.AudioPlayer;
+import com.supporthawk.utils.EdgeTTSUtil;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 
 /**
  * Page object for the SupportHawk Query screen.
@@ -17,6 +24,8 @@ public class QueryPage {
     private final String queryBox = "textarea.flex-1";
     private final String sendButton = "button[aria-label='Send message']";
     private final String processingIndicator = "div.animate-pulse";
+    private final String holdMicrophoneButton = "button[title='Record voice input']";
+    private final String stopMicrophoneButton = "button[title='Stop recording']";
 
     /**
      * Parent container for each full AI reply.
@@ -72,7 +81,7 @@ public class QueryPage {
     responses.last().waitFor();
 
     String response = responses.last().textContent();
-    
+
     // Print the response in the console
     System.out.println("===== AI RESPONSE =====");
     System.out.println(response);
@@ -88,5 +97,74 @@ public class QueryPage {
         enterQuery(query);
         clickSend();
         return getLatestResponse();
+    }
+
+    /**
+     * Voice flow: click microphone, play generated voice, stop recording,
+     * wait for transcription and AI response, then return the latest response.
+     * This keeps existing text flow intact and reusable.
+     *
+     * @param query text query that will be converted to speech
+     * @return latest AI response text
+     */
+    public String askVoiceQuestion(String query) {
+        Path audioFile = EdgeTTSUtil.generateSpeechFile(query);
+        String previousInput = page.locator(queryBox).inputValue();
+        int previousResponseCount = page.locator(responseContainer).count();
+
+        try {
+            page.locator(holdMicrophoneButton).click();
+
+            // Playback is synchronous: this call returns only after audio ends.
+            AudioPlayer.playMp3(audioFile);
+
+            page.locator(stopMicrophoneButton).click();
+
+            waitForTranscription(previousInput);
+            waitForNewResponse(previousResponseCount);
+            return getLatestResponse();
+        } finally {
+            try {
+                Files.deleteIfExists(audioFile);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private void waitForTranscription(String previousInput) {
+        long timeoutMs = Long.parseLong(ConfigReader.get("voice.transcription.timeout.ms"));
+        try {
+            page.waitForFunction(
+                    "([selector, oldValue]) => {" +
+                            "const el = document.querySelector(selector);" +
+                            "if (!el) return false;" +
+                            "const value = (el.value || '').trim();" +
+                            "return value.length > 0 && value !== (oldValue || '');" +
+                            "}",
+                    Arrays.asList(queryBox, previousInput),
+                    new Page.WaitForFunctionOptions().setTimeout((double) timeoutMs)
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Voice transcription did not appear in the query box within " + timeoutMs + " ms.",
+                    e
+            );
+        }
+    }
+
+    private void waitForNewResponse(int previousCount) {
+        long timeoutMs = Long.parseLong(ConfigReader.get("voice.response.timeout.ms"));
+        try {
+            page.waitForFunction(
+                    "([selector, oldCount]) => document.querySelectorAll(selector).length > oldCount",
+                    Arrays.asList(responseContainer, previousCount),
+                    new Page.WaitForFunctionOptions().setTimeout((double) timeoutMs)
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "AI response did not appear after voice query within " + timeoutMs + " ms.",
+                    e
+            );
+        }
     }
 }

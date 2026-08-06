@@ -139,4 +139,333 @@
     "video verification"],
     "tags": ["regression"]
   }
+,
+  {
+  "query": "What is the minimum balance requirement for savings account?",
+  "expected": ["no-frills account",
+    "no minimum balance",
+    "standard savings account",
+    "special savings account","monthly average balance"],
+  "tags": ["regression"]
+  }
+  ,
+  {
+    "query": "What is the difference between savings and current accounts?",
+    "expected": ["difference",
+    "savings account",
+    "current account",
+    "interest-bearing",
+    "business",
+    "personal",
+    "service fees",
+    "maintenance fees"],
+    "tags": ["regression"]
+  }
+  ,
+  {
+    "query": "How do I update my email?",
+    "expected": ["update your e-mail ID",
+      "Update Email ID",
+      "6-digit",
+      "Success screen",
+      "service requests",
+      "submit",
+      "review",
+      "confirm",
+      "otp",
+      "48 working hours"],
+    "tags": ["regression"]
+  },
+  
+  {
+    "query": "How can I update my PAN?",
+    "expected": [
+      "update your PAN",
+      "Branch",
+      "written request",
+      "digital process",
+      "service request",
+      "Update PAN",
+      "6-digit",
+      "success message",
+      "submit"   ],
+    "tags": ["regression"]
+  },
+  
+  {
+    "query": "What is the minimum amount required to open an FD?",
+    "expected": ["minimum",
+     "ivestment",
+     "required",
+     "low",
+     "1,000"],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "What is the penalty for premature FD withdrawal?",
+    "expected": [
+      "premature withdrawal",
+      "fixed deposit",
+      "1%",
+      "callable",
+      "nre",
+      "one year",
+      "interest"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "How can I open an FD online?",
+    "expected": [
+      "fixed deposit",
+      "internet banking",
+      "mobile banking",
+      "mbandhan",
+      "branch"
+    ],
+    "tags": ["regression"]
+  },
+  {
+    "query": "Tell me the interest rate for a gold loan.",
+    "expected": [
+      "gold loan",
+      "interest",
+      "9.45%",
+      "p.a"
+    ],
+    "tags": ["regression"]
+  },
+  
+  {
+    "query": "How can I apply for a home loan?",
+    "expected": [
+      "home loan",
+    "eligibility",
+    "credit score",
+    "700",
+    "ltv",
+    "down payment",
+    "emi",
+    "calculate",
+    "documents",
+    "compare",
+    "interest rate",
+    "lender"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "What documents are required for a home loan?",
+    "expected": [
+      "sanction letter",
+      "repayment",
+      "no dues",
+      "credit card",
+      "rent agreement",
+      "licence",
+      "partnership deed",
+      "sale deed",
+      "ownership",
+      "share certificate",
+      "property"
+    ],
+    "tags": ["regression"]
+  },
+  
+  {
+    "query": "What is the interest rate for a personal loan?",
+    "expected": [
+      "personal loan",
+      "income",
+      "outstanding loans",
+      "credit score",
+      "savings account",
+      "lower interest rate"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "Can I prepay my loan?",
+    "expected": [
+      "prepayment",
+      "part payment",
+      "advance emi",
+      "current emi",
+      "branch",
+      "overdue amount"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "Are there any foreclosure charges for loan?",
+    "expected": [
+      "Foreclosure",
+      "charges",
+      "Nil"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "How do I check my loan eligibility?",
+    "expected": [
+      "Eligibility",
+      "Income",
+      "Work life",
+      "Age",
+      "Personal loan",
+      "home loan",
+      "credit score"
+     ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "What is the processing fee for a loan?",
+    "expected": [
+      "processing fee",
+      "1%",
+      "gst",
+      "3%",
+      "non-refundable"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "How do I block my debit card?",
+    "expected": [
+      "debit card",
+      "customercare@bandhanbank.com",
+      "registered mobile",
+      "verify",
+      "email",
+      "sms"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "My debit card is lost. What should I do?",
+    "expected": [
+      "debit card",
+      "lost",
+      "block",
+      "immediately",
+      "stolen",
+      "https://bandhanbank.com/debit-card-block-unblock"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "How do I register for internet banking?",
+    "expected": [
+      "To register",
+      "internet banking",
+      "register",
+      "debit card",
+      "Date of Expiry",
+      "customer id",
+      "6-digit",
+      "otp",
+      "successfully registered",
+      "user id",
+      "password",
+      "login"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "I forgot my internet banking password. How can I reset it?",
+    "expected": [
+      "do not",
+      "remember",
+      "password",
+      "'Forgot Password",
+      "journey"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "Is mobile banking secure?",
+    "expected": [
+      "strong passwords",
+      "biometric",
+      "secure",
+      "public wi-fi",
+      "with caution"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "How do I register for UPI?",
+    "expected": [
+      "UPI",
+      "dial",
+      "*99#",
+      "from your phone",
+      "mobile phone",
+      "facilities",
+      "Send/receive",
+      "check balance",
+      "manage UPI",
+      "set/change UPI PIN"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "What is the UPI transaction limit?",
+    "expected": [
+      "daily",
+      "transaction limit",
+      "1 lakh",
+      "2 lakh",
+      "5,00,000",
+      "Online modes",
+      "e-Payment"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "Is Video KYC available?",
+    "expected": [
+      "video kyc",
+      "Video KYC is available",
+      "video call",
+      "pan",
+      "signature",
+      "internet connection",
+      "front camera",
+      "microphone",
+      "location"
+    ],
+    "tags": ["regression"]
+  },
+
+  {
+    "query": "If the video KYC call drops in between, can I resume the process?",
+    "expected": [
+      "drops",
+      "technical issue",
+      "link",
+      "sms",
+      "rejoin",
+      "48 hours",
+      "convenience"
+    ],
+    "tags": ["regression"]
+  }
+
 ]
+

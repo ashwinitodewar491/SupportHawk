@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 
 /** Every UI test class extends this. Do not modify for individual test needs — page objects and
  * test classes should only ever use the {@code page} field this sets up. */
@@ -35,10 +36,15 @@ public class BasePage {
         browser = playwright.chromium().launch(
                 new BrowserType.LaunchOptions()
                         .setHeadless(headless)
-                        .setSlowMo(slowMo));
+                        .setSlowMo(slowMo)
+                        .setArgs(List.of("--use-fake-ui-for-media-stream")));
         context = browser.newContext(
                 new Browser.NewContextOptions()
                         .setRecordVideoDir(Paths.get("target/videos")));
+        context.grantPermissions(
+                List.of("microphone"),
+                new BrowserContext.GrantPermissionsOptions().setOrigin(AppConfig.BASE_URL)
+        );
         page = context.newPage();
     }
 

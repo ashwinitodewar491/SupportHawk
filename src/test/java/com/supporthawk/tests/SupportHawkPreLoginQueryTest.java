@@ -4,6 +4,7 @@ import com.supporthawk.base.BasePage;
 import com.supporthawk.data.QueryData;
 import com.supporthawk.data.QueryModel;
 import com.supporthawk.pages.QueryPage;
+import com.supporthawk.config.ConfigReader;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -38,8 +39,12 @@ public class SupportHawkPreLoginQueryTest extends BasePage {
      */
     @DataProvider(name = "queryData")
     public Object[][] queryData() {
+        // Choose the query file to load for this suite.
+        // You can replace this with another file like "joshsoftware_queries.json".
+        String queryFileName = ConfigReader.get("query.file");
+
         // Load every query from the JSON file
-        List<QueryModel> allQueries = QueryData.getQueries();
+        List<QueryModel> allQueries = QueryData.getQueries(queryFileName);
 
         // Read the suite name from Maven: -DtestGroups=smoke or -DtestGroups=regression
         // If nothing was passed, this will be null and we keep all queries.
