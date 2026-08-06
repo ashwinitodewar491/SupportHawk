@@ -5,10 +5,8 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.supporthawk.config.AppConfig;
 import com.supporthawk.config.ConfigReader;
-import com.supporthawk.utils.AudioPlayer;
 import com.supporthawk.utils.EdgeTTSUtil;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
@@ -100,35 +98,37 @@ public class QueryPage {
     }
 
     /**
-     * Voice flow: click microphone, play generated voice, stop recording,
-     * wait for transcription and AI response, then return the latest response.
+     * Voice flow: click microphone, hold while fake WAV mic audio is consumed,
+     * click stop, wait for transcription and AI response, then return the latest response.
      * This keeps existing text flow intact and reusable.
      *
      * @param query text query that will be converted to speech
      * @return latest AI response text
      */
     public String askVoiceQuestion(String query) {
-        Path audioFile = EdgeTTSUtil.generateSpeechFile(query);
+        String wavPath = System.getProperty("current.voice.wav.path");
+        if (wavPath == null || wavPath.isBlank()) {
+            throw new RuntimeException(
+                    "Voice WAV path not configured for this test run. " +
+                            "Ensure voice tests run with QueryModel data so BasePage can prepare fake audio capture."
+            );
+        }
+
+        Path wavFile = Path.of(wavPath);
+        long wavDurationMs = EdgeTTSUtil.getWavDurationMs(wavFile);
+        long holdBufferMs = Long.parseLong(ConfigReader.get("voice.hold.buffer.ms"));
+        long totalHoldMs = wavDurationMs + holdBufferMs;
+
         String previousInput = page.locator(queryBox).inputValue();
         int previousResponseCount = page.locator(responseContainer).count();
 
-        try {
-            page.locator(holdMicrophoneButton).click();
+        page.locator(holdMicrophoneButton).click();
+        page.waitForTimeout(totalHoldMs);
+        page.locator(stopMicrophoneButton).click();
 
-            // Playback is synchronous: this call returns only after audio ends.
-            AudioPlayer.playMp3(audioFile);
-
-            page.locator(stopMicrophoneButton).click();
-
-            waitForTranscription(previousInput);
-            waitForNewResponse(previousResponseCount);
-            return getLatestResponse();
-        } finally {
-            try {
-                Files.deleteIfExists(audioFile);
-            } catch (Exception ignored) {
-            }
-        }
+        waitForTranscription(previousInput);
+        waitForNewResponse(previousResponseCount);
+        return getLatestResponse();
     }
 
     private void waitForTranscription(String previousInput) {

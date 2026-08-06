@@ -6,6 +6,8 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.supporthawk.config.AppConfig;
+import com.supporthawk.data.QueryModel;
+import com.supporthawk.utils.EdgeTTSUtil;
 import com.supporthawk.utils.ScreenshotUtil;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
@@ -16,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 
 /** Every UI test class extends this. Do not modify for individual test needs — page objects and
@@ -26,18 +29,32 @@ public class BasePage {
     protected Browser browser;
     protected BrowserContext context;
     protected Page page;
+    private Path currentVoiceWavPath;
 
     @BeforeMethod(alwaysRun = true)
-    public void setUpBrowser() {
+    public void setUpBrowser(Object[] params) {
         playwright = Playwright.create();
         boolean headless = AppConfig.isHeadless();
         double slowMo = headless ? 0 : 800;
+        List<String> launchArgs = new ArrayList<>();
+        launchArgs.add("--use-fake-ui-for-media-stream");
+
+        String voiceQuery = extractVoiceQuery(params);
+        if (voiceQuery != null && !voiceQuery.isBlank()) {
+            currentVoiceWavPath = EdgeTTSUtil.generateWavFile(voiceQuery);
+            launchArgs.add("--use-fake-device-for-media-stream");
+            launchArgs.add("--use-file-for-fake-audio-capture=" + currentVoiceWavPath.toAbsolutePath());
+            System.setProperty("current.voice.wav.path", currentVoiceWavPath.toAbsolutePath().toString());
+        } else {
+            currentVoiceWavPath = null;
+            System.clearProperty("current.voice.wav.path");
+        }
 
         browser = playwright.chromium().launch(
                 new BrowserType.LaunchOptions()
                         .setHeadless(headless)
                         .setSlowMo(slowMo)
-                        .setArgs(List.of("--use-fake-ui-for-media-stream")));
+                        .setArgs(launchArgs));
         context = browser.newContext(
                 new Browser.NewContextOptions()
                         .setRecordVideoDir(Paths.get("target/videos")));
@@ -86,5 +103,28 @@ public class BasePage {
             } catch (IOException ignored) {
             }
         }
+
+        if (currentVoiceWavPath != null) {
+            try {
+                Files.deleteIfExists(currentVoiceWavPath);
+            } catch (IOException ignored) {
+            }
+        }
+        System.clearProperty("current.voice.wav.path");
+    }
+
+    private String extractVoiceQuery(Object[] params) {
+        if (params == null) {
+            return null;
+        }
+
+        for (int i = 0; i < params.length; i++) {
+            Object param = params[i];
+            if (param instanceof QueryModel) {
+                QueryModel queryModel = (QueryModel) param;
+                return queryModel.getQuery();
+            }
+        }
+        return null;
     }
 }
