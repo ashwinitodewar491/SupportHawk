@@ -1,21 +1,46 @@
-package com.supporthawk.tests;
+package com.supporthawk.tests.prelogin;
 
 import com.supporthawk.base.BasePage;
 import com.supporthawk.data.QueryData;
 import com.supporthawk.data.QueryModel;
 import com.supporthawk.pages.QueryPage;
+import com.supporthawk.config.ConfigReader;
 import org.testng.Assert;
+import org.testng.ITest;
+import org.testng.ITestResult;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import com.supporthawk.utils.KeywordValidator;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * Data-driven UI test for the SupportHawk Query page.
- * Each row from fintech_queries.json becomes one TestNG test run.
- */
-public class SupportHawkPreLoginQueryTest extends BasePage {
+/* Data-driven UI test for the SupportHawk Query page.
+ * Each row from fintech_queries.json becomes one TestNG test run.*/
+public class SupportHawkPreLoginQueryTest extends BasePage implements ITest {
+
+    private final ThreadLocal<String> testName = new ThreadLocal<>();
+
+    @Override
+    public String getTestName() {
+        String name = testName.get();
+        return name != null ? name : "verifyQueryResponse";
+    }
+
+    /** Sets Surefire/TestNG invocation name to methodName(actual query text). */
+    @BeforeMethod(alwaysRun = true)
+    public void setInvocationName(Method method, Object[] params, ITestResult result) {
+        String name;
+        if (params != null && params.length > 0 && params[0] instanceof QueryModel) {
+            QueryModel queryModel = (QueryModel) params[0];
+            name = method.getName() + "(" + queryModel.getQuery() + ")";
+        } else {
+            name = method.getName();
+        }
+        testName.set(name);
+        result.setTestName(name);
+    }
 
     /**
      * DataProvider that reads queries from fintech_queries.json and filters
@@ -38,8 +63,12 @@ public class SupportHawkPreLoginQueryTest extends BasePage {
      */
     @DataProvider(name = "queryData")
     public Object[][] queryData() {
+        // Choose the query file to load for this suite.
+        // You can replace this with another file like "joshsoftware_queries.json".
+        String queryFileName = ConfigReader.get("query.file");
+
         // Load every query from the JSON file
-        List<QueryModel> allQueries = QueryData.getQueries();
+        List<QueryModel> allQueries = QueryData.getQueries(queryFileName);
 
         // Read the suite name from Maven: -DtestGroups=smoke or -DtestGroups=regression
         // If nothing was passed, this will be null and we keep all queries.
@@ -93,7 +122,9 @@ public class SupportHawkPreLoginQueryTest extends BasePage {
      *
      * Matching rules:
      * - 1 expected keyword  → need 1 match
-     * - 2+ expected keywords → need at least 2 matches
+     * - 2 expected keywords → need 2 matches
+     * - 3 expected keywords → need 2 matches
+     * - 4+ expected keywords → need 3 matches
      *
      * @param queryModel one query + expected keywords from the DataProvider
      */
@@ -102,40 +133,38 @@ public class SupportHawkPreLoginQueryTest extends BasePage {
     public void verifyQueryResponse(QueryModel queryModel) {
         QueryPage queryPage = new QueryPage(page);
 
-        // Open the Query page
         queryPage.navigate();
-
-        // Ask the question and wait for the AI reply
         String response = queryPage.askQuestion(queryModel.getQuery());
 
-        // Get the list of expected keywords from the JSON
         List<String> expectedKeywords = queryModel.getExpected();
 
         List<String> matchedKeywords =
-        KeywordValidator.findMatchedKeywords(response, expectedKeywords);
-
-        int requiredMatches = KeywordValidator.findMatchedKeywords(response, expectedKeywords).size();
-
+                KeywordValidator.findMatchedKeywords(response, expectedKeywords);
+        int requiredMatches = KeywordValidator.getRequiredMatches(expectedKeywords.size());
         int totalMatched = matchedKeywords.size();
-        int totalExpected = expectedKeywords.size();
+        boolean keywordValidationPassed = totalMatched >= requiredMatches;
 
-        // Print a clear debug block so failures are easy to investigate
         System.out.println("--------------------------------------------------");
-        System.out.println("Query: " + queryModel.getQuery());
-        System.out.println("Expected: " + expectedKeywords);
-        System.out.println("Matched: " + matchedKeywords);
-        System.out.println("Match count: " + totalMatched + "/" + totalExpected);
-        System.out.println("Response: " + response);
+        System.out.println("BOT RESPONSE KEYWORD VALIDATION");
+        System.out.println("Expected keywords: " + expectedKeywords);
+        System.out.println("Required matches: " + requiredMatches);
+        System.out.println("Matched keywords: " + matchedKeywords);
+        System.out.println("Matched count: " + totalMatched);
+        System.out.println("Keyword validation: " + (keywordValidationPassed ? "PASSED" : "FAILED"));
         System.out.println("--------------------------------------------------");
 
-        // Pass only if we found enough keywords
         Assert.assertTrue(
-                totalMatched >= requiredMatches,
-                "Not enough keywords matched. Needed at least " + requiredMatches
+                keywordValidationPassed,
+                "Not enough keywords matched in BOT RESPONSE. Needed at least " + requiredMatches
                         + " but found " + totalMatched
                         + ". Expected: " + expectedKeywords
                         + ". Matched: " + matchedKeywords
-                        + ". Response: " + response
         );
+
+        queryPage.provideRandomFeedback("This is automated test feedback for thumbs down.");
+
+        page.waitForTimeout(10000);
+        queryPage.validateReferenceLinks(expectedKeywords);
+
     }
 }

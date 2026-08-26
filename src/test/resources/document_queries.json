@@ -1,0 +1,39 @@
+[
+    {
+      "document": "Josh Software Organization",
+      "queries": [  
+        { 
+            "query": "What services does Josh Software provide?", 
+            "expected": ["Custom Software Development", "Fintech", "UI/UX", "Software Development"] 
+        },
+        { 
+            "query": "When was Josh Software founded??", 
+            "expected": ["founded", "2007"] 
+        },
+        { 
+            "query": "Where is Josh Software headquarters?", 
+            "expected": ["Pune", "Maharashtra"]
+        },
+        { 
+            "query": "How many employees are there in Josh Software?", 
+            "expected": ["200", "employees"]
+        },
+        { 
+            "query": "What is the mission of Josh Software?",
+             "expected": ["deliver", "scalable", "innovative"]
+        },
+        { 
+            "query": "What are the Core Values of Josh Software?", 
+            "expected": ["Innovation", "Customer", "Engineering", "Agile", "Transparency"]
+        },
+        { 
+            "query": "Who are the co-founders of Josh Software?", 
+            "expected": ["Gautam Rege", "Sethupathi Asokan"] 
+        },
+        { 
+            "query": "What is Josh Software Contact Number?", 
+            "expected": ["7887889902"] 
+        } 
+    ]
+    }
+  ]

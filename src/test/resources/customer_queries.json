@@ -1,0 +1,232 @@
+[
+  {
+    "query": "What is my account balance",
+    "expected": ["balance", "account"],
+    "tags": ["customer", "smoke", "regression", "english"],
+    "language": "English",
+    "intent": "balance_inquiry",
+    "disambiguationResponse": "savings"
+  },
+  {
+    "query": "How much money do I have",
+    "expected": ["balance", "account"],
+    "tags": ["customer", "smoke", "regression", "english"],
+    "language": "English",
+    "intent": "balance_inquiry",
+    "disambiguationResponse": "current"
+  },
+  {
+    "query": "What is my savings account balance",
+    "expected": ["balance", "savings"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "balance_inquiry"
+  },
+  {
+    "query": "What is my current account balance",
+    "expected": ["balance", "current"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "balance_inquiry"
+  },
+  {
+    "query": "Check balance",
+    "expected": ["balance", "account"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "balance_inquiry",
+    "disambiguationResponse": "savings"
+  },
+  {
+    "query": "Show me my recent transactions",
+    "expected": ["Recent", "Transactions"],
+    "tags": ["customer", "smoke", "regression", "english"],
+    "language": "English",
+    "intent": "transaction_inquiry",
+    "disambiguationResponse": "savings"
+  },
+  {
+    "query": "Show me transactions from my savings account",
+    "expected": ["Recent", "Transactions"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "transaction_inquiry"
+  },
+  {
+    "query": "Show me UPI transactions",
+    "expected": ["Recent", "Transactions", "upi"],
+    "tags": ["customer", "smoke", "regression", "english"],
+    "language": "English",
+    "intent": "transaction_inquiry",
+    "disambiguationResponse": "savings"
+  },
+  
+  {
+    "query": "Show 12 of my recent transactions",
+    "expected": ["Recent", "Transactions"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "transaction_inquiry",
+    "disambiguationResponse": "savings"
+  },
+  {
+    "query": "Show my latest transaction",
+    "expected": ["Recent", "Transaction"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "transaction_inquiry",
+    "disambiguationResponse": "savings"
+  },
+  {
+    "query": "What is the EMI on my home loan",
+    "expected": ["emi"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "loan_inquiry"
+  },
+  {
+    "query": "What is the outstanding amount on my personal loan",
+    "expected": ["outstanding", "Personal Loan"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "loan_inquiry"
+  },
+  {
+    "query": "Give me my loan details",
+    "expected": ["loan"],
+    "tags": ["customer", "smoke", "regression", "english"],
+    "language": "English",
+    "intent": "loan_inquiry",
+    "disambiguationResponse": "home loan"
+  },
+  {
+    "query": "Give me details of my education loan",
+    "expected": ["loan", "which", "Home Loan"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "loan_inquiry"
+  },
+  {
+    "query": "When is my next EMI due on my personal loan",
+    "expected": ["emi", "due"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "loan_inquiry"
+  },
+  {
+    "query": "What is the interest rate on my home loan",
+    "expected": ["interest"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "loan_inquiry"
+  },
+  {
+    "query": "What is the status of my home loan",
+    "expected": ["status"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "loan_inquiry"
+  },
+  {
+    "query": "Show my transaction history",
+    "expected": ["Recent", "Transactions", "Date","Description","Category", "Amount"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "transaction_inquiry",
+    "disambiguationResponse": "current"
+  },
+  {
+    "query": "Can I transfer money",
+    "expected": ["transfer", "success"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "transfer_money",
+    "disambiguationResponse": "Pooja Nair"
+  },
+  {
+    "query": "Transfer one rupee to Pooja Nair",
+    "expected": ["transfer", "success"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "transfer_money"
+  },
+  {
+    "query": "Make a transfer to Pooja Nair",
+    "expected": ["transfer", "success"],
+    "tags": ["customer", "regression", "english"],
+    "language": "English",
+    "intent": "transfer_money"
+  },
+  {
+    "query": "मेरे सेविंग्स अकाउंट में कितना बैलेंस है?",
+    "expected": ["balance", "savings"],
+    "tags": ["customer", "smoke", "regression", "hindi"],
+    "language": "Hindi",
+    "intent": "balance_inquiry"
+  },
+  {
+    "query": "मुझे मेरे सेविंग्स अकाउंट की transaction लिस्ट दिखाएँ",
+    "expected": ["transaction", "savings"],
+    "tags": ["customer", "regression", "hindi"],
+    "language": "Hindi",
+    "intent": "transaction_inquiry"
+  },
+  {
+    "query": "मेरे बेनिफ़िशियरी पूजा को 1 रुपया ट्रांसफर करें",
+    "expected": ["transfer"],
+    "tags": ["customer", "regression", "hindi"],
+    "language": "Hindi",
+    "intent": "transfer_money"
+  },
+  {
+    "query": "मेरे सेविंग्स अकाउंट के लिए मेरा लोन अकाउंट दिखाएँ",
+    "expected": ["loan", "account"],
+    "tags": ["customer", "regression", "hindi"],
+    "language": "Hindi",
+    "intent": "loan_inquiry",
+    "disambiguationResponse": "home loan"
+  },
+  {
+    "query": "मेरे education लोन के लिए सेविंग्स अकाउंट का EMI स्टेटमेंट",
+    "expected": ["emi", "loan"],
+    "tags": ["customer", "regression", "hindi"],
+    "language": "Hindi",
+    "intent": "loan_inquiry"
+  },
+  {
+    "query": "আমার সেভিংস অ্যাকাউন্টে কত টাকা আছে?",
+    "expected": ["balance", "savings"],
+    "tags": ["customer", "smoke", "regression", "bengali"],
+    "language": "Bengali",
+    "intent": "balance_inquiry"
+  },
+  {
+    "query": "আমার সেভিংস অ্যাকাউন্টের লেনদেনের তালিকা দেখান",
+    "expected": ["transaction", "savings"],
+    "tags": ["customer", "regression", "bengali"],
+    "language": "Bengali",
+    "intent": "transaction_inquiry"
+  },
+  {
+    "query": "পূজা নায়ারকে ১ রুপি পাঠান।",
+    "expected": ["transfer"],
+    "tags": ["customer", "regression", "bengali"],
+    "language": "Bengali",
+    "intent": "transfer_money"
+  },
+  {
+    "query": "আমার সেভিংস অ্যাকাউন্টের বিপরীতে থাকা লোন অ্যাকাউন্টটি দেখান",
+    "expected": ["loan", "account"],
+    "tags": ["customer", "regression", "bengali"],
+    "language": "Bengali",
+    "intent": "loan_inquiry",
+    "disambiguationResponse": "home loan"
+  },
+  {
+    "query": "আমার সেভিংস অ্যাকাউন্টের home লোনের ইএমআই (EMI) স্টেটমেন্ট",
+    "expected": ["emi", "loan"],
+    "tags": ["customer", "regression", "bengali"],
+    "language": "Bengali",
+    "intent": "loan_inquiry"
+  }
+]

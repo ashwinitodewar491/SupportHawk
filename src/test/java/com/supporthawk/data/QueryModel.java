@@ -24,6 +24,15 @@ public class QueryModel {
      */
     private List<String> tags;
 
+    /** Spoken/query language, e.g. "English", "Hindi", "Bengali". */
+    private String language;
+
+    /** Customer query intent, e.g. "balance_inquiry", "loan_inquiry". */
+    private String intent;
+
+    /** Follow-up selection when the bot asks to disambiguate, e.g. "savings", "home loan". */
+    private String disambiguationResponse;
+
     /** Empty constructor needed by Jackson when reading JSON. */
     public QueryModel() {
     }
@@ -64,6 +73,36 @@ public class QueryModel {
         this.tags = tags;
     }
 
+    /** Returns the query language (may be null for pre-login JSON). */
+    public String getLanguage() {
+        return language;
+    }
+
+    /** Sets the query language from JSON, e.g. "language": "English". */
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    /** Returns the customer query intent (may be null for pre-login JSON). */
+    public String getIntent() {
+        return intent;
+    }
+
+    /** Sets the customer query intent from JSON, e.g. "intent": "balance_inquiry". */
+    public void setIntent(String intent) {
+        this.intent = intent;
+    }
+
+    /** Returns the follow-up disambiguation response (may be null). */
+    public String getDisambiguationResponse() {
+        return disambiguationResponse;
+    }
+
+    /** Sets the follow-up disambiguation response from JSON. */
+    public void setDisambiguationResponse(String disambiguationResponse) {
+        this.disambiguationResponse = disambiguationResponse;
+    }
+
     /**
      * Legacy support: older JSON used a single field "group": "smoke".
      * Jackson calls this setter, and we store the value inside tags.
@@ -98,5 +137,14 @@ public class QueryModel {
             }
         }
         tags.add(value);
+    }
+
+    /**
+     * Surefire/TestNG print DataProvider parameters with toString().
+     * Returning the query text makes failure output identify which query failed.
+     */
+    @Override
+    public String toString() {
+        return query != null ? query : "";
     }
 }
