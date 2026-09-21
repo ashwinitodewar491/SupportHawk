@@ -1,4 +1,4 @@
-package com.supporthawk.customer;
+package com.supporthawk.fintech.customer;
 
 import com.supporthawk.data.QueryModel;
 import com.supporthawk.pages.QueryPage;

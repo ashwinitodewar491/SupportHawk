@@ -470,13 +470,10 @@
   {
     "query": "What Are the Different Types of Fixed Deposits?",
     "expected": [
-      "Cumulative",
-      "Non-Cumulative",
-      "Tax-Saving",
-      "compounding",
-      "long-term",
-      "Section 80C",
-      "Income Tax Act 1961"
+      "Standard Fixed Deposit",
+      "Advantage Fixed Deposit",
+      "Premium Fixed Deposit",
+      "Tax-Saver Fixed Deposit"
     ],
     "tags": ["regression"]
   },

@@ -7,11 +7,13 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.supporthawk.config.AppConfig;
 import com.supporthawk.data.QueryModel;
+import com.supporthawk.listeners.TestListener;
 import com.supporthawk.utils.EdgeTTSUtil;
 import com.supporthawk.utils.ScreenshotUtil;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,6 +25,7 @@ import java.util.List;
 
 /** Every UI test class extends this. Do not modify for individual test needs — page objects and
  * test classes should only ever use the {@code page} field this sets up. */
+@Listeners(TestListener.class)
 public class BasePage {
 
     protected Playwright playwright;

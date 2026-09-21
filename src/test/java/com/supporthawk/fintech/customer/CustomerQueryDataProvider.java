@@ -1,8 +1,9 @@
-package com.supporthawk.customer;
+package com.supporthawk.fintech.customer;
 
 import com.supporthawk.config.ConfigReader;
 import com.supporthawk.data.QueryData;
 import com.supporthawk.data.QueryModel;
+import com.supporthawk.data.QueryTagFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,23 +20,11 @@ public final class CustomerQueryDataProvider {
 
     public static Object[][] loadFilteredQueries() {
         String queryFileName = ConfigReader.get("customer.query.file");
-        List<QueryModel> allQueries = QueryData.getQueries(queryFileName);
+        List<QueryModel> selected = QueryTagFilter.filterQueries(
+                QueryData.getQueries(queryFileName)
+        );
 
-        String testGroups = System.getProperty("testGroups");
         String intentFilter = System.getProperty("intentFilter");
-        List<QueryModel> selected;
-
-        if (testGroups == null || testGroups.trim().isEmpty()) {
-            selected = allQueries;
-        } else {
-            selected = new ArrayList<>();
-            for (QueryModel query : allQueries) {
-                if (hasTag(query, testGroups)) {
-                    selected.add(query);
-                }
-            }
-        }
-
         if (intentFilter != null && !intentFilter.trim().isEmpty()) {
             List<QueryModel> intentSelected = new ArrayList<>();
             for (QueryModel query : selected) {
@@ -52,18 +41,5 @@ public final class CustomerQueryDataProvider {
             data[i][0] = selected.get(i);
         }
         return data;
-    }
-
-    private static boolean hasTag(QueryModel query, String suiteName) {
-        List<String> tags = query.getTags();
-        if (tags == null) {
-            return false;
-        }
-        for (String tag : tags) {
-            if (tag != null && tag.equalsIgnoreCase(suiteName)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

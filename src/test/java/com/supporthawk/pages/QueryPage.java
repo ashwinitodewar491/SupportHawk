@@ -5,6 +5,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.supporthawk.config.AppConfig;
 import com.supporthawk.config.ConfigReader;
+import com.supporthawk.config.TenantRoutes;
 import com.supporthawk.utils.EdgeTTSUtil;
 
 import java.nio.file.Path;
@@ -57,9 +58,14 @@ public class QueryPage {
         return page;
     }
 
-    /** Opens the Query page. */
+    /** Opens the Josh Query page ({@code base.url} + Josh {@code /query}). */
     public void navigate() {
-        page.navigate(AppConfig.BASE_URL + "/query");
+        navigate(TenantRoutes.Tenant.JOSH);
+    }
+
+    /** Opens the Query page for the given tenant using {@link TenantRoutes}. */
+    public void navigate(TenantRoutes.Tenant tenant) {
+        page.navigate(AppConfig.BASE_URL + TenantRoutes.queryPath(tenant));
     }
 
     /** Types the question into the query box. */
@@ -281,7 +287,10 @@ public class QueryPage {
             System.out.println("--------------------------------------------------");
 
             if (!passed) {
-                failures.add(href + " — " + failureReason);
+                failures.add(
+                        "Actual Reference Link: " + href + "\n"
+                                + "Reason: " + failureReason
+                );
             }
 
             restoreQueryPage(queryPageUrl);
@@ -289,8 +298,9 @@ public class QueryPage {
 
         if (!failures.isEmpty()) {
             throw new AssertionError(
-                    "Reference validation failed for " + failures.size() + " of " + hrefs.size() + " link(s):\n"
-                            + String.join("\n", failures)
+                    "Reference Link Validation Failed\n"
+                            + "Failed " + failures.size() + " of " + hrefs.size() + " link(s):\n\n"
+                            + String.join("\n\n", failures)
             );
         }
     }
@@ -330,7 +340,9 @@ public class QueryPage {
         Locator links = messageContainer.locator(referenceLinks);
         if (links.count() == 0) {
             throw new AssertionError(
-                    "References section has no links for the latest bot response.\n"
+                    "Reference Link Validation Failed\n"
+                            + "Actual Reference Link: <no reference link>\n"
+                            + "Reason: References section has no links for the latest bot response.\n"
                             + "Expected document title: " + expectedDocumentTitle + "\n"
                             + "Actual document title: <no reference link>"
             );
@@ -341,6 +353,7 @@ public class QueryPage {
                 new Locator.FilterOptions().setHasText(expectedDocumentTitle)
         );
         Locator linkToClick = matchingByTitle.count() > 0 ? matchingByTitle.first() : links.first();
+        String referenceHref = linkToClick.getAttribute("href");
 
         String queryPageUrl = page.url();
         Page documentPage;
@@ -363,9 +376,12 @@ public class QueryPage {
 
         boolean documentOpened = isDocumentViewerOpen(documentPage);
         String actualDocumentTitle = resolveOpenedDocumentTitle(documentPage, linkToClick);
+        String actualReferenceLink = (referenceHref != null && !referenceHref.isBlank())
+                ? referenceHref
+                : documentPage.url();
 
         System.out.println("--------------------------------------------------");
-        System.out.println("Reference URL: " + documentPage.url());
+        System.out.println("Reference URL: " + actualReferenceLink);
         System.out.println("Document viewer open: " + documentOpened);
         System.out.println("Expected document title: " + expectedDocumentTitle);
         System.out.println("Actual document title: " + actualDocumentTitle);
@@ -374,7 +390,9 @@ public class QueryPage {
         try {
             if (!documentOpened) {
                 throw new AssertionError(
-                        "Referenced document/PDF did not open.\n"
+                        "Reference Link Validation Failed\n"
+                                + "Actual Reference Link: " + actualReferenceLink + "\n"
+                                + "Reason: Referenced document/PDF did not open.\n"
                                 + "Expected document title: " + expectedDocumentTitle + "\n"
                                 + "Opened URL: " + documentPage.url()
                 );
@@ -385,7 +403,10 @@ public class QueryPage {
 
             if (!titleMatches) {
                 throw new AssertionError(
-                        "Expected document title: " + expectedDocumentTitle + "\n"
+                        "Reference Link Validation Failed\n"
+                                + "Actual Reference Link: " + actualReferenceLink + "\n"
+                                + "Reason: Document title mismatch.\n"
+                                + "Expected document title: " + expectedDocumentTitle + "\n"
                                 + "Actual document title: "
                                 + (actualDocumentTitle == null ? "<not found>" : actualDocumentTitle)
                 );
@@ -481,8 +502,8 @@ public class QueryPage {
         waitForNewUserMessage(previousUserMessageCount);
 
         String transcribed = page.locator(userMessage).last().innerText().trim();
-        String expectedNormalized = normalizeText(query);
-        String actualNormalized = normalizeText(transcribed);
+        String expectedNormalized = normalizeVoiceTranscription(query);
+        String actualNormalized = normalizeVoiceTranscription(transcribed);
 
         if (!expectedNormalized.equals(actualNormalized)) {
             throw new AssertionError(
@@ -517,6 +538,21 @@ public class QueryPage {
             return "";
         }
         return text.replaceAll("\\s+", " ").trim().toLowerCase();
+    }
+
+    /**
+     * Normalizes voice STT text for comparison: trim, collapse whitespace,
+     * case-insensitive, and ignore common punctuation differences.
+     */
+    private String normalizeVoiceTranscription(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text
+                .replaceAll("[.,?!:;]", "")
+                .replaceAll("\\s+", " ")
+                .trim()
+                .toLowerCase();
     }
 
     private void waitForNewResponse(int previousCount) {

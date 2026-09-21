@@ -9,7 +9,7 @@
 
     <test name="UI Tests">
         <classes>
-            <class name="com.supporthawk.tests.prelogin.SupportHawkPreLoginQueryTest"/>
+            <class name="com.supporthawk.tests.fintech.prelogin.FintechPreLoginTextTest"/>
         </classes>
     </test>
 
