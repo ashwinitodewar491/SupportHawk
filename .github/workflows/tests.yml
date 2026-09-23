@@ -1,0 +1,200 @@
+name: SupportHawk Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  schedule:
+    # Daily at 02:30 UTC (08:00 IST) against master (smoke)
+    # - cron: "30 2 * * *"
+    - cron: "47 20 * * *"
+  workflow_dispatch:
+    inputs:
+      run_type:
+        description: "Suite to run"
+        required: true
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - full
+
+jobs:
+  test:
+    name: Maven TestNG Playwright
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine run configuration
+        id: config
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "execution_type=Daily Smoke" >> "$GITHUB_OUTPUT"
+            echo "suite_label=Smoke" >> "$GITHUB_OUTPUT"
+            echo "maven_extra=-DtestGroups=smoke" >> "$GITHUB_OUTPUT"
+            echo "branch_label=master" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.run_type }}" = "full" ]; then
+              echo "execution_type=Manual Full" >> "$GITHUB_OUTPUT"
+              echo "suite_label=Full" >> "$GITHUB_OUTPUT"
+              echo "maven_extra=" >> "$GITHUB_OUTPUT"
+            else
+              echo "execution_type=Manual Smoke" >> "$GITHUB_OUTPUT"
+              echo "suite_label=Smoke" >> "$GITHUB_OUTPUT"
+              echo "maven_extra=-DtestGroups=smoke" >> "$GITHUB_OUTPUT"
+            fi
+            echo "branch_label=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "execution_type=PR Full" >> "$GITHUB_OUTPUT"
+            echo "suite_label=Full" >> "$GITHUB_OUTPUT"
+            echo "maven_extra=" >> "$GITHUB_OUTPUT"
+            echo "branch_label=${{ github.head_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            # push to master
+            echo "execution_type=Full" >> "$GITHUB_OUTPUT"
+            echo "suite_label=Full" >> "$GITHUB_OUTPUT"
+            echo "maven_extra=" >> "$GITHUB_OUTPUT"
+            echo "branch_label=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Scheduled runs must always test master, never a feature branch tip.
+      - name: Checkout master (scheduled)
+        if: github.event_name == 'schedule'
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      # PR / push / manual: test the event's code (PR head, pushed commit, or selected branch).
+      - name: Checkout repository
+        if: github.event_name != 'schedule'
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK
+        uses: actions/setup-java@v4
+        with:
+          # pom.xml compiles with Java 21 (maven.compiler.source/target=21).
+          # Using 21 so CI matches the project; Java 17 cannot compile source 21.
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Install ffmpeg (Edge TTS WAV conversion)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install edge-tts (voice query audio)
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install edge-tts
+
+      - name: Install Playwright Chromium (Java CLI)
+        run: >
+          mvn -B exec:java
+          -Dexec.mainClass=com.microsoft.playwright.CLI
+          -Dexec.args="install --with-deps chromium"
+
+      - name: Run Maven tests
+        id: maven-tests
+        run: |
+          set -euo pipefail
+          EXTRA="${{ steps.config.outputs.maven_extra }}"
+          # Override pom testFailureIgnore so the job fails when tests fail.
+          # headless=true is required on ubuntu-latest (no display).
+          mvn clean test -B \
+            -Dheadless=true \
+            -Dmaven.test.failure.ignore=false \
+            ${EXTRA}
+
+      - name: Collect Surefire summary
+        if: always()
+        id: summary
+        shell: bash
+        run: |
+          set +e
+          SUMMARY_FILE="${RUNNER_TEMP}/surefire-summary.txt"
+          {
+            echo "Execution type: ${{ steps.config.outputs.execution_type }}"
+            echo "Suite: ${{ steps.config.outputs.suite_label }}"
+            echo "Branch: ${{ steps.config.outputs.branch_label }}"
+            echo "Commit: ${{ github.sha }}"
+            echo "Event: ${{ github.event_name }}"
+            echo ""
+            if [ -d target/surefire-reports ]; then
+              echo "Surefire results:"
+              # Aggregate "Tests run:" lines from Surefire text reports when present.
+              if ls target/surefire-reports/*.txt >/dev/null 2>&1; then
+                grep -h "Tests run:" target/surefire-reports/*.txt || true
+              else
+                echo "(No Surefire .txt summaries found)"
+              fi
+            else
+              echo "(No target/surefire-reports directory)"
+            fi
+          } > "$SUMMARY_FILE"
+          {
+            echo "text<<EOF"
+            cat "$SUMMARY_FILE"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          cat "$SUMMARY_FILE"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supporthawk-test-reports
+          path: |
+            target/extent-report/
+            target/screenshots/
+            target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Resolve email subject result
+        if: always()
+        id: result
+        shell: bash
+        run: |
+          if [ "${{ steps.maven-tests.outcome }}" = "success" ]; then
+            echo "status=PASSED" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=FAILED" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Send email notification
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          to: ${{ secrets.REPORT_EMAIL_TO }}
+          from: SupportHawk CI
+          subject: "[SupportHawk] ${{ steps.config.outputs.execution_type }} - ${{ steps.result.outputs.status }}"
+          body: |
+            SupportHawk CI result: ${{ steps.result.outputs.status }}
+
+            Execution type: ${{ steps.config.outputs.execution_type }}
+            Suite: ${{ steps.config.outputs.suite_label }} (Smoke or Full)
+            Branch under test: ${{ steps.config.outputs.branch_label }}
+            Commit: ${{ github.sha }}
+            Event: ${{ github.event_name }}
+
+            Workflow run URL:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Reports:
+            Extent report, Surefire reports, and screenshots (when produced) are uploaded
+            as the GitHub Actions artifact named "supporthawk-test-reports" on this run.
+            Open the run URL above → Artifacts → supporthawk-test-reports.
+
+            Test result summary:
+            ${{ steps.summary.outputs.text }}

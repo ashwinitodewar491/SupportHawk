@@ -5,6 +5,7 @@ import com.supporthawk.config.AppConfig;
 import com.supporthawk.config.ConfigReader;
 import com.supporthawk.config.TenantRoutes;
 import com.supporthawk.pages.LoginPage;
+import com.supporthawk.utils.RetryUtils;
 import org.testng.Assert;
 
 /**
@@ -20,7 +21,8 @@ public final class AdminLoginHelper {
     public static void loginAsAdmin(Page page) {
         LoginPage loginPage = new LoginPage(page);
 
-        page.navigate(AppConfig.BASE_URL + TenantRoutes.queryPath(TenantRoutes.Tenant.JOSH));
+        String url = AppConfig.BASE_URL + TenantRoutes.queryPath(TenantRoutes.Tenant.JOSH);
+        RetryUtils.execute(3, 2000, () -> page.navigate(url));
         loginPage.clickLogin();
         loginPage.loginAsAdmin();
         loginPage.enterUsername(ConfigReader.get("username"));

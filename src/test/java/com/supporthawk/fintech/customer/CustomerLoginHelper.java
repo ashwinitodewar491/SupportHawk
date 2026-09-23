@@ -5,6 +5,7 @@ import com.supporthawk.config.AppConfig;
 import com.supporthawk.config.ConfigReader;
 import com.supporthawk.config.TenantRoutes;
 import com.supporthawk.pages.LoginPage;
+import com.supporthawk.utils.RetryUtils;
 import org.testng.Assert;
 
 /**
@@ -18,7 +19,8 @@ public final class CustomerLoginHelper {
     public static void login(Page page) {
         LoginPage loginPage = new LoginPage(page);
 
-        page.navigate(AppConfig.BASE_URL + TenantRoutes.queryPath(TenantRoutes.Tenant.FINTECH));
+        String url = AppConfig.BASE_URL + TenantRoutes.queryPath(TenantRoutes.Tenant.FINTECH);
+        RetryUtils.execute(3, 2000, () -> page.navigate(url));
         loginPage.clickLogin();
         loginPage.loginAsCustomer();
         loginPage.enterCIF(ConfigReader.get("cif"));

@@ -23,6 +23,7 @@ public final class CustomerQueryDataProvider {
         List<QueryModel> selected = QueryTagFilter.filterQueries(
                 QueryData.getQueries(queryFileName)
         );
+        selected = QueryTagFilter.filterByLanguages(selected);
 
         String intentFilter = System.getProperty("intentFilter");
         if (intentFilter != null && !intentFilter.trim().isEmpty()) {

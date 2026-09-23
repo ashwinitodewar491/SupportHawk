@@ -14,7 +14,6 @@ public final class HtmlReportRenderer {
 
     public static String render(List<QueryResult> results, QueryResultCollector.RunMeta meta) {
         List<QueryResult> safe = results != null ? results : List.of();
-        int total = safe.size();
         int passed = 0;
         int failed = 0;
         int skipped = 0;
@@ -29,7 +28,12 @@ public final class HtmlReportRenderer {
             }
             durationSum += Math.max(0L, r.getDurationMs());
         }
+        // Pass rate = passed / (passed + failed + skipped); total tests matches that denominator.
+        int total = passed + failed + skipped;
         double passPct = total == 0 ? 0.0 : (passed * 100.0 / total);
+        double failSharePct = total == 0 ? 0.0 : (failed * 100.0 / total);
+        double skipSharePct = total == 0 ? 0.0 : (skipped * 100.0 / total);
+
         long suiteDuration = 0L;
         if (meta != null && meta.suiteStartEpochMs > 0 && meta.suiteEndEpochMs >= meta.suiteStartEpochMs) {
             suiteDuration = meta.suiteEndEpochMs - meta.suiteStartEpochMs;
@@ -38,45 +42,81 @@ public final class HtmlReportRenderer {
         }
         String startTs = meta != null ? QueryResultCollector.formatEpoch(meta.suiteStartEpochMs) : "-";
         String endTs = meta != null ? QueryResultCollector.formatEpoch(meta.suiteEndEpochMs) : "-";
+        String passPctText = String.format(Locale.US, "%.1f%%", passPct);
+        String failShareText = String.format(Locale.US, "%.1f%%", failSharePct);
+        String skipShareText = String.format(Locale.US, "%.1f%%", skipSharePct);
+
+        // Conic stops for pass → fail → skip segments.
+        double passStop = passPct;
+        double failStop = passPct + failSharePct;
 
         StringBuilder html = new StringBuilder();
         html.append("<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"UTF-8\"/>");
         html.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>");
-        html.append("<title>SupportHawk Test Dashboard</title>");
+        html.append("<title>SupportHawk QA Automation Dashboard</title>");
         html.append("<style>");
         html.append(css());
         html.append("</style></head><body>");
+
         html.append("<header class=\"hero\"><div>");
-        html.append("<h1>SupportHawk Test Dashboard</h1>");
-        html.append("<p class=\"sub\">Query-level execution report</p>");
+        html.append("<h1>SupportHawk QA Automation Dashboard</h1>");
+        html.append("<p class=\"sub\">Query-level test execution summary</p>");
         html.append("</div>");
         html.append("<div class=\"hero-meta\">");
         html.append("<div>Start: <strong>").append(esc(startTs)).append("</strong></div>");
         html.append("<div>End: <strong>").append(esc(endTs)).append("</strong></div>");
-        html.append("<div>Pass rate: <strong>").append(String.format(Locale.US, "%.1f%%", passPct))
-                .append("</strong></div>");
+        html.append("<div>Pass rate: <strong>").append(esc(passPctText)).append("</strong></div>");
         html.append("</div></header>");
 
-        html.append("<section class=\"cards\">");
-        html.append(card("Total", String.valueOf(total), "total"));
-        html.append(card("Passed", String.valueOf(passed), "pass"));
-        html.append(card("Failed", String.valueOf(failed), "fail"));
-        html.append(card("Skipped", String.valueOf(skipped), "skip"));
-        html.append(card("Pass %", String.format(Locale.US, "%.1f%%", passPct), "pct"));
-        html.append(card("Duration", formatDuration(suiteDuration), "dur"));
+        // 1–3. Summary cards — count + explicit "Label: XX.X%" percentage line
+        html.append("<section class=\"cards\" aria-label=\"Execution summary cards\">");
+        html.append(card("TOTAL TESTS", String.valueOf(total), null, "total"));
+        html.append(card("PASSED", String.valueOf(passed),
+                "Passed: " + passPctText, "pass"));
+        html.append(card("FAILED", String.valueOf(failed),
+                "Failed: " + failShareText, "fail"));
+        html.append(card("SKIPPED", String.valueOf(skipped),
+                "Skipped: " + skipShareText, "skip"));
+        html.append(card("PASS RATE", passPctText,
+                "Passed: " + passed + " / " + total, "pct"));
+        html.append(card("TOTAL DURATION", formatDuration(suiteDuration), null, "dur"));
         html.append("</section>");
 
-        html.append("<section class=\"viz\">");
-        html.append("<div class=\"donut\" style=\"--p:").append(String.format(Locale.US, "%.2f", passPct))
-                .append("\"></div>");
+        // 4–5. Donut + legend
+        html.append("<section class=\"viz\" aria-label=\"Pass fail skip chart\">");
+        html.append("<div class=\"donut\" style=\"--p:")
+                .append(String.format(Locale.US, "%.4f", passStop))
+                .append(";--f:").append(String.format(Locale.US, "%.4f", failStop))
+                .append(";\"></div>");
         html.append("<div class=\"viz-legend\">");
-        html.append("<div><span class=\"dot pass\"></span>Passed ").append(passed).append("</div>");
-        html.append("<div><span class=\"dot fail\"></span>Failed ").append(failed).append("</div>");
-        html.append("<div><span class=\"dot skip\"></span>Skipped ").append(skipped).append("</div>");
+        html.append("<div class=\"legend-title\">Result breakdown</div>");
+        html.append("<div><span class=\"dot pass\"></span>Passed (").append(passed)
+                .append(") — Passed: ").append(esc(passPctText)).append("</div>");
+        html.append("<div><span class=\"dot fail\"></span>Failed (").append(failed)
+                .append(") — Failed: ").append(esc(failShareText)).append("</div>");
+        html.append("<div><span class=\"dot skip\"></span>Skipped (").append(skipped)
+                .append(") — Skipped: ").append(esc(skipShareText)).append("</div>");
+        html.append("<div class=\"legend-rate\">Pass rate: <strong>")
+                .append(esc(passPctText)).append("</strong></div>");
         html.append("</div></section>");
 
+        // 7. Overall execution summary
+        html.append("<section class=\"panel summary-panel\">");
+        html.append("<h2>Overall Execution Summary</h2>");
+        html.append("<div class=\"summary-grid\">");
+        html.append(meta("Start time", startTs));
+        html.append(meta("End time", endTs));
+        html.append(meta("Duration", formatDuration(suiteDuration)));
+        html.append(meta("Total", String.valueOf(total)));
+        html.append(meta("Passed", String.valueOf(passed)));
+        html.append(meta("Failed", String.valueOf(failed)));
+        html.append(meta("Skipped", String.valueOf(skipped)));
+        html.append(meta("Pass rate", passPctText));
+        html.append("</div></section>");
+
+        // 6. Failure Details
         html.append("<section class=\"panel\">");
-        html.append("<h2>Failed Queries</h2>");
+        html.append("<h2>Failure Details</h2>");
         List<QueryResult> failedList = new ArrayList<>();
         for (QueryResult r : safe) {
             if (r.isFailed()) {
@@ -84,8 +124,12 @@ public final class HtmlReportRenderer {
             }
         }
         if (failedList.isEmpty()) {
-            html.append("<p class=\"ok\">No failed queries.</p>");
+            html.append("<p class=\"ok\">No failed tests.</p>");
         } else {
+            html.append("<p class=\"fail-count\">")
+                    .append(failedList.size())
+                    .append(failedList.size() == 1 ? " failed test" : " failed tests")
+                    .append("</p>");
             for (int i = 0; i < failedList.size(); i++) {
                 html.append(failedCard(failedList.get(i), i));
             }
@@ -122,16 +166,29 @@ public final class HtmlReportRenderer {
         return html.toString();
     }
 
-    private static String card(String label, String value, String kind) {
-        return "<div class=\"card " + kind + "\"><div class=\"label\">" + esc(label)
-                + "</div><div class=\"value\">" + esc(value) + "</div></div>";
+    private static String card(String label, String value, String percentageLine, String kind) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div class=\"card ").append(kind).append("\">");
+        sb.append("<div class=\"label\">").append(esc(label)).append("</div>");
+        sb.append("<div class=\"value\">").append(esc(value)).append("</div>");
+        if (percentageLine != null && !percentageLine.isBlank()) {
+            // Explicit percentage text for UI visibility, e.g. "Passed: 44.7%"
+            sb.append("<div class=\"pct-line\">").append(esc(percentageLine)).append("</div>");
+        }
+        sb.append("</div>");
+        return sb.toString();
     }
 
     private static String failedCard(QueryResult r, int index) {
         StringBuilder sb = new StringBuilder();
+        String testName = testName(r);
+        String tenantSuite = tenantSuite(r);
+
         sb.append("<article class=\"fail-card\" id=\"fail-").append(index).append("\">");
-        sb.append("<h3>").append(esc(display(r.getQuery()))).append("</h3>");
+        sb.append("<h3>").append(esc(testName)).append("</h3>");
         sb.append("<div class=\"meta-grid\">");
+        sb.append(meta("Test name", testName));
+        sb.append(meta("Tenant / Suite", tenantSuite));
         sb.append(meta("Flow", r.getFlow()));
         sb.append(meta("Language", displayOptional(r.getLanguage())));
         sb.append(meta("Intent", intentDisplay(r)));
@@ -142,32 +199,103 @@ public final class HtmlReportRenderer {
         sb.append(meta("Class", display(r.getTestClass())));
         sb.append(meta("Method", display(r.getTestMethod())));
         sb.append("</div>");
-        sb.append("<div class=\"ea\"><div><h4>Expected Response</h4><pre>")
-                .append(esc(display(r.getExpectedResponse()))).append("</pre></div>");
-        sb.append("<div><h4>Actual Response</h4><pre>")
-                .append(esc(display(r.getActualResponse()))).append("</pre></div></div>");
+
+        if (hasText(r.getQuery())) {
+            sb.append("<h4>Query</h4><pre>").append(esc(r.getQuery())).append("</pre>");
+        }
+
+        sb.append("<h4>Failure / error message</h4><pre class=\"err\">")
+                .append(esc(display(r.getErrorMessage()))).append("</pre>");
+
+        if (hasText(r.getActualResponse()) || hasText(r.getExpectedResponse())) {
+            sb.append("<div class=\"ea\"><div><h4>Expected Response</h4><pre>")
+                    .append(esc(display(r.getExpectedResponse()))).append("</pre></div>");
+            sb.append("<div><h4>Actual Response</h4><pre>")
+                    .append(esc(display(r.getActualResponse()))).append("</pre></div></div>");
+        }
+
         if (hasText(r.getExpectedDocument()) || hasText(r.getActualDocument())
                 || hasText(r.getDocumentValidationStatus())) {
-            sb.append("<div class=\"ea\"><div><h4>Expected Document</h4><pre>")
+            sb.append("<div class=\"ea\"><div><h4>Expected Document / Reference</h4><pre>")
                     .append(esc(displayOptional(r.getExpectedDocument()))).append("</pre></div>");
-            sb.append("<div><h4>Actual Document</h4><pre>")
-                    .append(esc(displayOptional(r.getActualDocument()))).append("</pre></div></div>");
+            sb.append("<div><h4>Actual Document / Reference</h4>");
+            appendReferenceOrText(sb, r.getActualDocument());
+            sb.append("</div></div>");
+        } else if (looksLikeUrl(r.getActualDocument())) {
+            sb.append("<h4>Reference link</h4>");
+            appendReferenceOrText(sb, r.getActualDocument());
         }
-        sb.append("<h4>Failure reason</h4><pre class=\"err\">")
-                .append(esc(display(r.getErrorMessage()))).append("</pre>");
+
+        if (r.getScreenshotPath() != null && !r.getScreenshotPath().isBlank()) {
+            String rel = toReportRelative(r.getScreenshotPath());
+            sb.append("<h4>Screenshot</h4>");
+            sb.append("<a class=\"shot-link\" href=\"").append(esc(rel))
+                    .append("\" target=\"_blank\" rel=\"noopener\">Open screenshot</a>");
+            sb.append("<a href=\"").append(esc(rel)).append("\" target=\"_blank\" rel=\"noopener\">");
+            sb.append("<img class=\"shot\" src=\"").append(esc(rel)).append("\" alt=\"failure screenshot\"/>");
+            sb.append("</a>");
+        }
+
         if (r.getStackTrace() != null && !r.getStackTrace().isBlank()) {
             sb.append("<details><summary>Stack trace</summary><pre class=\"stack\">")
                     .append(esc(r.getStackTrace())).append("</pre></details>");
         }
-        if (r.getScreenshotPath() != null && !r.getScreenshotPath().isBlank()) {
-            String rel = toReportRelative(r.getScreenshotPath());
-            sb.append("<h4>Screenshot</h4>");
-            sb.append("<a href=\"").append(esc(rel)).append("\" target=\"_blank\">");
-            sb.append("<img class=\"shot\" src=\"").append(esc(rel)).append("\" alt=\"failure screenshot\"/>");
-            sb.append("</a>");
-        }
         sb.append("</article>");
         return sb.toString();
+    }
+
+    private static void appendReferenceOrText(StringBuilder sb, String value) {
+        if (!hasText(value)) {
+            sb.append("<pre>N/A</pre>");
+            return;
+        }
+        if (looksLikeUrl(value)) {
+            sb.append("<p class=\"ref-link\"><a href=\"").append(esc(value.trim()))
+                    .append("\" target=\"_blank\" rel=\"noopener\">")
+                    .append(esc(value.trim())).append("</a></p>");
+        } else {
+            sb.append("<pre>").append(esc(value)).append("</pre>");
+        }
+    }
+
+    private static boolean looksLikeUrl(String value) {
+        if (value == null) {
+            return false;
+        }
+        String t = value.trim().toLowerCase(Locale.ROOT);
+        return t.startsWith("http://") || t.startsWith("https://");
+    }
+
+    private static String testName(QueryResult r) {
+        String cls = r.getTestClass();
+        String method = r.getTestMethod();
+        if (hasText(cls) && hasText(method)) {
+            String simple = cls;
+            int dot = cls.lastIndexOf('.');
+            if (dot >= 0 && dot < cls.length() - 1) {
+                simple = cls.substring(dot + 1);
+            }
+            return simple + "." + method;
+        }
+        if (hasText(r.getQuery())) {
+            return r.getQuery();
+        }
+        return display(method);
+    }
+
+    private static String tenantSuite(QueryResult r) {
+        String flow = display(r.getFlow());
+        String cls = display(r.getTestClass());
+        if ("-".equals(flow) && "-".equals(cls)) {
+            return "-";
+        }
+        if ("-".equals(cls)) {
+            return flow;
+        }
+        if ("-".equals(flow)) {
+            return cls;
+        }
+        return flow + " · " + cls;
     }
 
     private static String resultRow(QueryResult r, int index) {
@@ -215,7 +343,7 @@ public final class HtmlReportRenderer {
             if (r.getScreenshotPath() != null && !r.getScreenshotPath().isBlank()) {
                 String rel = toReportRelative(r.getScreenshotPath());
                 sb.append("<h4>Screenshot</h4><a href=\"").append(esc(rel))
-                        .append("\" target=\"_blank\"><img class=\"shot\" src=\"")
+                        .append("\" target=\"_blank\" rel=\"noopener\"><img class=\"shot\" src=\"")
                         .append(esc(rel)).append("\" alt=\"screenshot\"/></a>");
             }
             if (r.getStackTrace() != null && !r.getStackTrace().isBlank()) {
@@ -306,31 +434,47 @@ public final class HtmlReportRenderer {
                 :root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--text:#e5e7eb;--muted:#94a3b8;
                 --pass:#22c55e;--fail:#ef4444;--skip:#f59e0b;--line:#334155;--accent:#38bdf8}
                 *{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-                background:linear-gradient(180deg,#0b1224,#111827 40%,#0f172a);color:var(--text)}
-                .hero{display:flex;justify-content:space-between;gap:1rem;padding:1.5rem 2rem;border-bottom:1px solid var(--line)}
-                .hero h1{margin:0 0 .25rem;font-size:1.6rem}.sub{margin:0;color:var(--muted)}
-                .hero-meta{text-align:right;color:var(--muted);font-size:.92rem}
-                .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;padding:1.25rem 2rem}
-                .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1rem}
-                .card .label{color:var(--muted);font-size:.85rem}.card .value{font-size:1.5rem;font-weight:700;margin-top:.35rem}
-                .card.pass .value{color:var(--pass)}.card.fail .value{color:var(--fail)}.card.skip .value{color:var(--skip)}
-                .viz{display:flex;align-items:center;gap:1.5rem;padding:0 2rem 1.25rem}
-                .donut{width:110px;height:110px;border-radius:50%;
-                background:conic-gradient(var(--pass) calc(var(--p)*1%), var(--fail) 0);
-                mask:radial-gradient(circle 40px,transparent 98%,#000 100%);-webkit-mask:radial-gradient(circle 40px,transparent 98%,#000 100%)}
-                .viz-legend{display:flex;flex-direction:column;gap:.4rem;color:var(--muted)}
-                .dot{display:inline-block;width:.7rem;height:.7rem;border-radius:50%;margin-right:.45rem}
+                background:linear-gradient(180deg,#0b1224,#111827 40%,#0f172a);color:var(--text);line-height:1.45}
+                .hero{display:flex;justify-content:space-between;gap:1rem;padding:1.75rem 2rem;border-bottom:1px solid var(--line)}
+                .hero h1{margin:0 0 .35rem;font-size:1.75rem;letter-spacing:.01em}.sub{margin:0;color:var(--muted)}
+                .hero-meta{text-align:right;color:var(--muted);font-size:.92rem;display:flex;flex-direction:column;gap:.25rem}
+                .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;padding:1.5rem 2rem 1rem}
+                .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.15rem;
+                box-shadow:0 8px 24px rgba(0,0,0,.18)}
+                .card .label{color:var(--muted);font-size:.78rem;font-weight:600;letter-spacing:.04em}
+                .card .value{font-size:1.85rem;font-weight:750;margin-top:.4rem;line-height:1.1}
+                .card .pct-line{margin-top:.5rem;font-size:1.05rem;font-weight:700;color:var(--text);
+                background:rgba(15,23,42,.55);border:1px solid var(--line);border-radius:8px;padding:.35rem .55rem;
+                display:inline-block}
+                .card.pass .value,.card.pass .pct-line{color:var(--pass)}
+                .card.fail .value,.card.fail .pct-line{color:var(--fail)}
+                .card.skip .value,.card.skip .pct-line{color:var(--skip)}
+                .card.pct .value,.card.pct .pct-line{color:var(--accent)}
+                .viz{display:flex;align-items:center;gap:2rem;padding:0.5rem 2rem 1.5rem}
+                .donut{width:200px;height:200px;border-radius:50%;flex-shrink:0;
+                background:conic-gradient(var(--pass) 0 calc(var(--p)*1%), var(--fail) calc(var(--p)*1%) calc(var(--f)*1%), var(--skip) calc(var(--f)*1%) 100%);
+                mask:radial-gradient(circle 68px,transparent 98%,#000 100%);
+                -webkit-mask:radial-gradient(circle 68px,transparent 98%,#000 100%);
+                box-shadow:inset 0 0 0 1px rgba(148,163,184,.15)}
+                .viz-legend{display:flex;flex-direction:column;gap:.55rem;color:var(--text);font-size:1rem}
+                .legend-title{color:var(--muted);font-size:.85rem;font-weight:600;margin-bottom:.15rem}
+                .legend-rate{margin-top:.35rem;color:var(--muted)}
+                .dot{display:inline-block;width:.75rem;height:.75rem;border-radius:50%;margin-right:.5rem;vertical-align:middle}
                 .dot.pass{background:var(--pass)}.dot.fail{background:var(--fail)}.dot.skip{background:var(--skip)}
-                .panel{margin:0 2rem 1.5rem;padding:1.25rem;background:rgba(17,24,39,.85);border:1px solid var(--line);border-radius:16px}
-                .panel h2{margin:0 0 1rem}.ok{color:var(--pass)}
-                .fail-card{background:var(--card);border:1px solid #7f1d1d;border-radius:12px;padding:1rem;margin-bottom:1rem}
-                .fail-card h3{margin:0 0 .75rem;color:#fecaca}
+                .panel{margin:0 2rem 1.5rem;padding:1.35rem 1.4rem;background:rgba(17,24,39,.9);border:1px solid var(--line);border-radius:16px}
+                .panel h2{margin:0 0 1rem;font-size:1.2rem}.ok{color:var(--pass)}.fail-count{color:#fecaca;margin:0 0 1rem}
+                .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem}
+                .fail-card{background:var(--card);border:1px solid #7f1d1d;border-radius:12px;padding:1.1rem;margin-bottom:1rem}
+                .fail-card h3{margin:0 0 .75rem;color:#fecaca;font-size:1.05rem}
+                .fail-card h4{margin:1rem 0 .4rem;font-size:.9rem;color:var(--muted)}
                 .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.6rem;margin-bottom:.8rem}
                 .meta{background:#0b1220;border-radius:8px;padding:.55rem .7rem}.meta span{display:block;color:var(--muted);font-size:.75rem}
                 .ea{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.8rem}pre{white-space:pre-wrap;word-break:break-word;
-                background:#0b1220;border-radius:8px;padding:.75rem;border:1px solid var(--line);max-height:260px;overflow:auto}
+                background:#0b1220;border-radius:8px;padding:.75rem;border:1px solid var(--line);max-height:260px;overflow:auto;margin:0}
                 pre.err{border-color:#7f1d1d;color:#fecaca}pre.stack{max-height:220px;font-size:.8rem}
-                .shot{max-width:100%;border-radius:10px;border:1px solid var(--line);margin-top:.4rem}
+                .shot{max-width:100%;border-radius:10px;border:1px solid var(--line);margin-top:.4rem;display:block}
+                .shot-link{display:inline-block;margin-bottom:.35rem;color:var(--accent)}
+                .ref-link a{color:var(--accent);word-break:break-all}
                 .filters{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem}
                 .filters input,.filters select{background:#0b1220;color:var(--text);border:1px solid var(--line);
                 border-radius:8px;padding:.55rem .7rem}
@@ -343,7 +487,9 @@ public final class HtmlReportRenderer {
                 .badge.skipped{background:rgba(245,158,11,.15);color:var(--skip)}
                 .toggle{background:#0b1220;color:var(--accent);border:1px solid var(--line);border-radius:6px;cursor:pointer}
                 .detail-body{padding:.5rem 0 1rem}
-                @media(max-width:800px){.hero{flex-direction:column}.ea{grid-template-columns:1fr}.hero-meta{text-align:left}}
+                @media(max-width:800px){.hero{flex-direction:column}.ea{grid-template-columns:1fr}.hero-meta{text-align:left}
+                .donut{width:160px;height:160px;mask:radial-gradient(circle 54px,transparent 98%,#000 100%);
+                -webkit-mask:radial-gradient(circle 54px,transparent 98%,#000 100%)}}
                 """;
     }
 

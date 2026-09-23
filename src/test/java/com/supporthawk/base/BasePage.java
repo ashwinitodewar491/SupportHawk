@@ -43,8 +43,9 @@ public class BasePage {
         launchArgs.add("--use-fake-ui-for-media-stream");
 
         String voiceQuery = extractVoiceQuery(params);
+        String voiceLanguage = extractVoiceLanguage(params);
         if (voiceQuery != null && !voiceQuery.isBlank()) {
-            currentVoiceWavPath = EdgeTTSUtil.generateWavFile(voiceQuery);
+            currentVoiceWavPath = EdgeTTSUtil.generateWavFile(voiceQuery, voiceLanguage);
             launchArgs.add("--use-fake-device-for-media-stream");
             launchArgs.add("--use-file-for-fake-audio-capture=" + currentVoiceWavPath.toAbsolutePath());
             System.setProperty("current.voice.wav.path", currentVoiceWavPath.toAbsolutePath().toString());
@@ -118,15 +119,23 @@ public class BasePage {
     }
 
     private String extractVoiceQuery(Object[] params) {
+        QueryModel queryModel = extractQueryModel(params);
+        return queryModel != null ? queryModel.getQuery() : null;
+    }
+
+    private String extractVoiceLanguage(Object[] params) {
+        QueryModel queryModel = extractQueryModel(params);
+        return queryModel != null ? queryModel.getLanguage() : null;
+    }
+
+    private QueryModel extractQueryModel(Object[] params) {
         if (params == null) {
             return null;
         }
-
         for (int i = 0; i < params.length; i++) {
             Object param = params[i];
             if (param instanceof QueryModel) {
-                QueryModel queryModel = (QueryModel) param;
-                return queryModel.getQuery();
+                return (QueryModel) param;
             }
         }
         return null;

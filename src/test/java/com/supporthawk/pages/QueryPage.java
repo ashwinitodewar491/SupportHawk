@@ -7,6 +7,7 @@ import com.supporthawk.config.AppConfig;
 import com.supporthawk.config.ConfigReader;
 import com.supporthawk.config.TenantRoutes;
 import com.supporthawk.utils.EdgeTTSUtil;
+import com.supporthawk.utils.RetryUtils;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -65,7 +66,9 @@ public class QueryPage {
 
     /** Opens the Query page for the given tenant using {@link TenantRoutes}. */
     public void navigate(TenantRoutes.Tenant tenant) {
-        page.navigate(AppConfig.BASE_URL + TenantRoutes.queryPath(tenant));
+        String url = AppConfig.BASE_URL + TenantRoutes.queryPath(tenant);
+        // Transient navigation timeouts (default 30s) — retry this navigate only.
+        RetryUtils.execute(3, 2000, () -> page.navigate(url));
     }
 
     /** Types the question into the query box. */
@@ -78,12 +81,27 @@ public class QueryPage {
         page.locator(sendButton).click();
     }
 
-    /** Waits until the "processing" indicator disappears. */
+    /**
+     * Waits for the AI processing indicator ({@code div.animate-pulse}) to appear,
+     * then waits until it disappears. Soft-waits briefly for appear so a delayed
+     * render is not treated as "already hidden" (zero matches).
+     */
     public void waitForResponse() {
-        page.locator(processingIndicator).waitFor(
-                new Locator.WaitForOptions()
-                        .setState(WaitForSelectorState.HIDDEN)
-        );
+        Locator indicator = page.locator(processingIndicator).first();
+
+        // Soft appear wait: avoid HIDDEN succeeding immediately when pulse is not yet in the DOM.
+        try {
+            if (!indicator.isVisible()) {
+                indicator.waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(10_000));
+            }
+        } catch (Exception ignored) {
+            // Never appeared within the short window — continue to HIDDEN check.
+        }
+
+        indicator.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.HIDDEN));
         // Give the UI time to finish rendering
         page.waitForTimeout(2000);
     }
@@ -264,8 +282,12 @@ public class QueryPage {
             String failureReason = null;
 
             try {
-                page.navigate(href);
-                page.waitForLoadState();
+                // Retry only this link's navigate/load (30s Playwright timeout per attempt).
+                // Empty-content results are not retried — they are validation outcomes.
+                RetryUtils.execute(3, 2000, () -> {
+                    page.navigate(href);
+                    page.waitForLoadState();
+                });
 
                 String pageContent = page.locator("body").innerText();
                 if (pageContent == null || pageContent.trim().isEmpty()) {
@@ -313,8 +335,10 @@ public class QueryPage {
     private void restoreQueryPage(String queryPageUrl) {
         try {
             if (!page.url().equals(queryPageUrl)) {
-                page.navigate(queryPageUrl);
-                page.waitForLoadState();
+                RetryUtils.execute(3, 2000, () -> {
+                    page.navigate(queryPageUrl);
+                    page.waitForLoadState();
+                });
             }
         } catch (Exception e) {
             System.out.println("Warning: could not restore query page: " + e.getMessage());
@@ -492,8 +516,35 @@ public class QueryPage {
         long holdBufferMs = Long.parseLong(ConfigReader.get("voice.hold.buffer.ms"));
         long totalHoldMs = wavDurationMs + holdBufferMs;
 
-        int previousUserMessageCount = page.locator(userMessage).count();
         int previousResponseCount = page.locator(responseContainer).count();
+        sendVoiceQueryAndValidateTranscription(query, totalHoldMs);
+
+        try {
+            // Wait out processing before racing on a new responseContainer.
+            waitForResponse();
+            waitForNewResponse(previousResponseCount);
+        } catch (RuntimeException firstWaitFailure) {
+            // Response may have arrived just after the wait timed out — check before resending.
+            if (page.locator(responseContainer).count() > previousResponseCount) {
+                return getLatestResponse();
+            }
+
+            // One voice-query retry only (2 total attempts). Transcription rules unchanged.
+            int responseCountBeforeRetry = page.locator(responseContainer).count();
+            sendVoiceQueryAndValidateTranscription(query, totalHoldMs);
+            waitForResponse();
+            waitForNewResponse(responseCountBeforeRetry);
+        }
+
+        return getLatestResponse();
+    }
+
+    /**
+     * Holds the mic for the WAV duration, stops recording, and validates transcription.
+     * Does not wait for the AI response.
+     */
+    private void sendVoiceQueryAndValidateTranscription(String query, long totalHoldMs) {
+        int previousUserMessageCount = page.locator(userMessage).count();
 
         page.locator(holdMicrophoneButton).click();
         page.waitForTimeout(totalHoldMs);
@@ -512,9 +563,6 @@ public class QueryPage {
                             + "Actual: " + transcribed
             );
         }
-
-        waitForNewResponse(previousResponseCount);
-        return getLatestResponse();
     }
 
     private void waitForNewUserMessage(int previousCount) {
