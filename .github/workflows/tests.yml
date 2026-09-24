@@ -8,8 +8,7 @@ on:
     branches:
       - master
   schedule:
-    # Daily at 02:30 UTC (08:00 IST) against master (smoke)
-    # - cron: "30 2 * * *"
+    # Daily at 08:00 IST against master (smoke)
     - cron: "0 8 * * *"
       timezone: "Asia/Kolkata"
   workflow_dispatch:
@@ -171,14 +170,14 @@ jobs:
 
       - name: Send email notification
         if: always()
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v18
         with:
           server_address: ${{ secrets.SMTP_SERVER }}
           server_port: ${{ secrets.SMTP_PORT }}
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
-          to: ${{ secrets.REPORT_EMAIL_TO }}
-          from: SupportHawk CI
+          to: pallavi.patil@joshsoftware.com
+          from: SupportHawk CI <${{ secrets.SMTP_USERNAME }}>
           subject: "[SupportHawk] ${{ steps.config.outputs.execution_type }} - ${{ steps.result.outputs.status }}"
           body: |
             SupportHawk CI result: ${{ steps.result.outputs.status }}
