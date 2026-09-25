@@ -106,30 +106,28 @@ public final class EdgeTTSUtil {
      * Calls edge-tts using configured neural voice and rate.
      */
     private static void generateWithEdgeTts(Path textFile, String voice, String rate, Path mp3File) throws Exception {
-        try {
-            runProcess(
-                    Arrays.asList(
-                            "python", "-m", "edge_tts",
-                            "--voice", voice,
-                            "--rate", rate,
-                            "--file", textFile.toAbsolutePath().toString(),
-                            "--write-media", mp3File.toAbsolutePath().toString()
-                    ),
-                    "edge-tts synthesis failed"
-            );
-        } catch (Exception firstError) {
-            // Windows setups often use the "py" launcher instead of "python".
-            runProcess(
-                    Arrays.asList(
-                            "py", "-m", "edge_tts",
-                            "--voice", voice,
-                            "--rate", rate,
-                            "--file", textFile.toAbsolutePath().toString(),
-                            "--write-media", mp3File.toAbsolutePath().toString()
-                    ),
-                    "edge-tts synthesis failed (python/py fallback)"
-            );
+        runProcess(
+                Arrays.asList(
+                        pythonExecutable(), "-m", "edge_tts",
+                        "--voice", voice,
+                        "--rate", rate,
+                        "--file", textFile.toAbsolutePath().toString(),
+                        "--write-media", mp3File.toAbsolutePath().toString()
+                ),
+                "edge-tts synthesis failed"
+        );
+    }
+
+    /**
+     * Windows local setups use the {@code py} launcher; Linux/macOS CI uses {@code python3}
+     * (as installed by the GitHub Actions workflow).
+     */
+    private static String pythonExecutable() {
+        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        if (os.contains("win")) {
+            return "py";
         }
+        return "python3";
     }
 
     /**

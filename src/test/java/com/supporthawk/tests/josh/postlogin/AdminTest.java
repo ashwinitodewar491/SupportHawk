@@ -1,25 +1,30 @@
 package com.supporthawk.tests.josh.postlogin;
 
 import com.supporthawk.admin.AdminLoginHelper;
-import com.supporthawk.base.BasePage;
+import com.supporthawk.document.JoshDocumentFlowBase;
 import com.supporthawk.document.JoshDocumentTestRunner;
 import org.testng.annotations.Test;
 
 /**
- * Josh Admin post-login document flow driven by document_queries.json:
- * for each document — upload, preview, edit, query + references, then delete —
- * with Admin login performed once.
+ * Josh Admin post-login document query suite.
  *
- * Query-level response and document/reference failures are soft-recorded so
- * remaining queries and documents still run; the TestNG test fails once at the
- * end if any were recorded.
+ * <p>Document upload/delete is owned by {@link JoshDocumentFlowBase} so one automation
+ * document is shared with {@code JoshPreLoginDocumentTextTest}:
+ * setup upload → this admin query run → pre-login queries → cleanup delete.
+ *
+ * <p>Query-level response and document/reference failures are soft-recorded so
+ * remaining queries still run; the TestNG test fails once at the end if any were recorded.
  */
-public class AdminTest extends BasePage {
+public class AdminTest extends JoshDocumentFlowBase {
 
-    @Test(description = "Upload each document from JSON, query it, verify references, then delete")
+    @Test(
+            groups = JoshDocumentFlowBase.JOSH_DOCUMENT_FLOW_GROUP,
+            priority = 10,
+            description = "Admin Josh document queries (document already uploaded by flow setup)"
+    )
     public void testAdminDocumentUpload() throws Exception {
         AdminLoginHelper.loginAsAdmin(page);
-        JoshDocumentTestRunner.runDocumentQuerySuite(
+        JoshDocumentTestRunner.runAdminDocumentQueriesOnly(
                 page,
                 getClass().getSimpleName(),
                 "testAdminDocumentUpload",

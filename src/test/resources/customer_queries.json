@@ -188,7 +188,7 @@
   },
   {
     "query": "আমার সেভিংস অ্যাকাউন্টে কত টাকা আছে?",
-    "expected": ["সঞ্চয়", "savings","খতায়","টাকা"],
+    "expected": ["সঞ্চয়","খতায়","টাকা"],
     "tags": ["customer", "smoke", "regression", "bengali"],
     "language": "Bengali",
     "intent": "balance_inquiry"

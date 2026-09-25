@@ -8,7 +8,7 @@ on:
     branches:
       - master
   schedule:
-    # Daily at 08:00 IST against master (smoke)
+    # Daily at 08:00 IST against admin-test-improvements (smoke)
     - cron: "0 8 * * *"
       timezone: "Asia/Kolkata"
   workflow_dispatch:
@@ -38,7 +38,7 @@ jobs:
             echo "execution_type=Daily Smoke" >> "$GITHUB_OUTPUT"
             echo "suite_label=Smoke" >> "$GITHUB_OUTPUT"
             echo "maven_extra=-DtestGroups=smoke" >> "$GITHUB_OUTPUT"
-            echo "branch_label=master" >> "$GITHUB_OUTPUT"
+            echo "branch_label=admin-test-improvements" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ inputs.run_type }}" = "full" ]; then
               echo "execution_type=Manual Full" >> "$GITHUB_OUTPUT"
@@ -63,12 +63,12 @@ jobs:
             echo "branch_label=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           fi
 
-      # Scheduled runs must always test master, never a feature branch tip.
-      - name: Checkout master (scheduled)
+      # Scheduled runs test admin-test-improvements (temporary; smoke only).
+      - name: Checkout admin-test-improvements (scheduled)
         if: github.event_name == 'schedule'
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: admin-test-improvements
 
       # PR / push / manual: test the event's code (PR head, pushed commit, or selected branch).
       - name: Checkout repository

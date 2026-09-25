@@ -1,16 +1,22 @@
 package com.supporthawk.tests.josh.prelogin;
 
-import com.supporthawk.base.BasePage;
+import com.supporthawk.document.JoshDocumentFlowBase;
 import com.supporthawk.document.JoshDocumentTestRunner;
 import org.testng.annotations.Test;
 
 /**
- * Josh pre-login document text queries: open Josh /query with no login and ask
- * questions from document_queries.json against documents already uploaded by admin.
+ * Josh public/customer document text suite.
+ * Relies on the shared Josh document flow: admin setup uploads the test document,
+ * this class only asks questions (no login, upload, or delete), then flow cleanup
+ * deletes the document after both Admin and pre-login tests finish.
  */
-public class JoshPreLoginDocumentTextTest extends BasePage {
+public class JoshPreLoginDocumentTextTest extends JoshDocumentFlowBase {
 
-    @Test(description = "Ask Josh pre-login document queries and verify responses/references")
+    @Test(
+            groups = JoshDocumentFlowBase.JOSH_DOCUMENT_FLOW_GROUP,
+            priority = 20,
+            description = "Ask Josh pre-login document queries and verify responses/references"
+    )
     public void testJoshPreLoginDocumentTextQueries() {
         JoshDocumentTestRunner.runPreLoginDocumentQuerySuite(
                 page,

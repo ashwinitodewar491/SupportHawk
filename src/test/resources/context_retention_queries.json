@@ -1,0 +1,83 @@
+[
+  {
+    "name": "Home Loan Context Retention",
+    "tags": ["context", "regression","smoke"],
+    "language": "en",
+    "intent": "context_retention",
+    "questions": [
+      {
+        "id": "home_loan_context_01",
+        "query": "What types of home loans are available?",
+        "expectedKeywords": [
+          "Sajavat Home Loan",
+          "Suraksha Home Loan",
+          "Su-awas Home Loan",
+          "Suvidha Home Loan"
+        ],
+        "contextDependency": false
+      },
+      {
+        "id": "home_loan_context_02",
+        "query": "What are the interest rates for these?",
+        "expectedKeywords": [
+          "interest rate",
+          "Su-awas",
+          "Suraksha",
+          "13.00%",
+          "15.00%",
+          "8.55%",
+          "13.52%"
+        ],
+        "contextDependency": true
+      },
+      {
+        "id": "home_loan_context_03",
+        "query": "Which one would be suitable if I don't have formal income proof?",
+        "expectedKeywords": [
+          "Suvidha Home Loan",
+          "formal income proof",
+          "cash flow"
+        ],
+        "contextDependency": true
+      },
+      {
+        "id": "home_loan_context_04",
+        "query": "What should I know before applying?",
+        "expectedKeywords": [
+          "eligibility",
+          "LTV",
+          "documents",
+          "credit score",
+          "EMI"
+        ],
+        "contextDependency": true
+      },
+      {
+        "id": "home_loan_context_05",
+        "query": "What documents would I need?",
+        "expectedKeywords": [
+          "loan application form",
+          "photo ID",
+          "address proof",
+          "age proof",
+          "ITR",
+          "bank passbook"
+        ],
+        "contextDependency": true
+      },
+      {
+        "id": "home_loan_context_06",
+        "query": "What else should I check before submitting them?",
+        "expectedKeywords": [
+          "eligibility",
+          "LTV",
+          "EMI",
+          "compare",
+          "interest rate",
+          "organize your documents"
+        ],
+        "contextDependency": true
+      }
+    ]
+  }
+]

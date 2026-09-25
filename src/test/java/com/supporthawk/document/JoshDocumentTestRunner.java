@@ -15,9 +15,10 @@ import java.util.List;
 
 /**
  * Shared orchestration for Josh document-query tests driven by document_queries.json.
- * Admin post-login: upload/prepare, run queries, delete.
- * Josh pre-login: navigate to Josh /query and run queries against existing documents.
- * Both suites honor {@code -DtestGroups} via {@link QueryTagFilter}.
+ *
+ * <p>Upload/delete for the shared Admin + pre-login flow is owned by
+ * {@link JoshDocumentFlowBase}. This runner still supports a self-contained
+ * upload→query→delete path via {@link #runDocumentQuerySuite}.
  */
 public final class JoshDocumentTestRunner {
 
@@ -27,12 +28,8 @@ public final class JoshDocumentTestRunner {
     }
 
     /**
-     * Runs the full admin document lifecycle + query loop for the given test identity.
-     *
-     * @param page                 Playwright page (already admin-logged-in)
-     * @param testClass            simple test class name for reporting metadata
-     * @param testMethod           test method name for reporting metadata
-     * @param failureSummaryPrefix exact prefix used in the final Assert.fail message
+     * Self-contained admin path: for each filtered document, upload, query, then delete.
+     * Prefer the shared Josh document flow hooks for suite-level lifecycle.
      */
     public static void runDocumentQuerySuite(
             Page page,
@@ -42,11 +39,31 @@ public final class JoshDocumentTestRunner {
     ) throws Exception {
         LoginPage loginPage = new LoginPage(page);
         List<DocumentQuerySet> documents = loadFilteredDocuments();
-
         List<String> failures = new ArrayList<>();
 
         for (DocumentQuerySet documentSet : documents) {
-            processDocument(page, loginPage, documentSet, failures, testClass, testMethod);
+            processDocument(page, loginPage, documentSet, failures, testClass, testMethod, true, true);
+        }
+
+        failIfAny(failures, failureSummaryPrefix);
+    }
+
+    /**
+     * Admin queries only — documents must already be uploaded (e.g. by flow setup).
+     * Does not upload or delete.
+     */
+    public static void runAdminDocumentQueriesOnly(
+            Page page,
+            String testClass,
+            String testMethod,
+            String failureSummaryPrefix
+    ) throws Exception {
+        LoginPage loginPage = new LoginPage(page);
+        List<DocumentQuerySet> documents = loadFilteredDocuments();
+        List<String> failures = new ArrayList<>();
+
+        for (DocumentQuerySet documentSet : documents) {
+            processDocument(page, loginPage, documentSet, failures, testClass, testMethod, false, false);
         }
 
         failIfAny(failures, failureSummaryPrefix);
@@ -65,7 +82,6 @@ public final class JoshDocumentTestRunner {
         new QueryPage(page).navigate(TenantRoutes.Tenant.JOSH);
 
         List<DocumentQuerySet> documents = loadFilteredDocuments();
-
         List<String> failures = new ArrayList<>();
 
         for (DocumentQuerySet documentSet : documents) {
@@ -92,9 +108,30 @@ public final class JoshDocumentTestRunner {
     }
 
     /**
-     * Loads document_queries.json and applies the same {@code -DtestGroups} filter
-     * used by Fintech DataProviders (query-level tags; empty group → all).
+     * Uploads and prepares every filtered document (removes any stale copy first).
+     * Used by Josh flow {@code @BeforeGroups} setup.
      */
+    public static void uploadAllFilteredDocuments(Page page) throws Exception {
+        LoginPage loginPage = new LoginPage(page);
+        for (DocumentQuerySet documentSet : loadFilteredDocuments()) {
+            DocumentLifecycleManager.uploadAndPrepareDocument(page, loginPage, documentSet);
+        }
+    }
+
+    /**
+     * Deletes every filtered document. Used by Josh flow {@code @AfterGroups} cleanup.
+     */
+    public static void deleteAllFilteredDocuments(Page page) {
+        LoginPage loginPage = new LoginPage(page);
+        for (DocumentQuerySet documentSet : loadFilteredDocuments()) {
+            String documentTitle = documentSet.getDocument();
+            if (documentTitle == null || documentTitle.isBlank()) {
+                continue;
+            }
+            DocumentLifecycleManager.deleteDocument(loginPage, documentTitle);
+        }
+    }
+
     private static List<DocumentQuerySet> loadFilteredDocuments() {
         List<DocumentQuerySet> documents = QueryTagFilter.filterDocumentSets(
                 QueryData.getDocumentQueries(DOCUMENT_QUERIES_FILE)
@@ -114,15 +151,22 @@ public final class JoshDocumentTestRunner {
             DocumentQuerySet documentSet,
             List<String> failures,
             String testClass,
-            String testMethod
+            String testMethod,
+            boolean upload,
+            boolean delete
     ) throws Exception {
         List<QueryModel> queries = documentSet.getQueries();
         Assert.assertNotNull(queries, "queries missing for document: " + documentSet.getDocument());
         Assert.assertFalse(queries.isEmpty(), "queries empty for document: " + documentSet.getDocument());
 
-        String documentTitle = DocumentLifecycleManager.uploadAndPrepareDocument(
-                page, loginPage, documentSet
-        );
+        String documentTitle;
+        if (upload) {
+            documentTitle = DocumentLifecycleManager.uploadAndPrepareDocument(page, loginPage, documentSet);
+        } else {
+            documentTitle = documentSet.getDocument();
+            Assert.assertNotNull(documentTitle, "document title missing");
+            Assert.assertFalse(documentTitle.isBlank(), "document title blank");
+        }
 
         try {
             DocumentQueryRunner.executeDocumentQueries(
@@ -135,8 +179,9 @@ public final class JoshDocumentTestRunner {
                     testMethod
             );
         } finally {
-            // Always delete this document before the next JSON entry is processed.
-            DocumentLifecycleManager.deleteDocument(loginPage, documentTitle);
+            if (delete) {
+                DocumentLifecycleManager.deleteDocument(loginPage, documentTitle);
+            }
         }
     }
 

@@ -495,6 +495,44 @@ public class QueryPage {
     }
 
     /**
+     * Asks a follow-up in the <strong>current</strong> chat without navigating or
+     * clearing history. Waits for processing to finish, then for a <em>new</em>
+     * {@code responseContainer} (count increase) before reading the latest reply.
+     * Used by multi-turn context-retention flows.
+     */
+    public String askQuestionInSameChat(String query) {
+        int previousResponseCount = page.locator(responseContainer).count();
+        enterQuery(query);
+        clickSend();
+        waitForResponse();
+        waitForAdditionalAssistantResponse(previousResponseCount);
+
+        Locator responses = page.locator(responseContainer);
+        responses.last().waitFor();
+        return responses.last().innerText();
+    }
+
+    /**
+     * Waits until a new assistant response container appears after a prior count.
+     * Uses the existing voice response timeout config (no new timeout property).
+     */
+    private void waitForAdditionalAssistantResponse(int previousCount) {
+        long timeoutMs = Long.parseLong(ConfigReader.get("voice.response.timeout.ms"));
+        try {
+            page.waitForFunction(
+                    "([selector, oldCount]) => document.querySelectorAll(selector).length > oldCount",
+                    Arrays.asList(responseContainer, previousCount),
+                    new Page.WaitForFunctionOptions().setTimeout((double) timeoutMs)
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "New AI response did not appear in the same chat within " + timeoutMs + " ms.",
+                    e
+            );
+        }
+    }
+
+    /**
      * Voice flow: click microphone, hold while fake WAV mic audio is consumed,
      * click stop, validate the transcribed user chat message, wait for AI response,
      * then return the latest response.

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  Guarantees Josh document lifecycle order:
+  BeforeGroups setup → AdminTest → JoshPreLoginDocumentTextTest → AfterGroups cleanup
+
+  Run:
+    mvn test -DsuiteXmlFile=src/test/resources/josh-document-flow.xml
+-->
+<suite name="Josh Document Flow Suite" verbose="1" preserve-order="true">
+
+    <listeners>
+        <listener class-name="com.supporthawk.listeners.TestListener"/>
+    </listeners>
+
+    <test name="Josh Document Flow" preserve-order="true">
+        <classes>
+            <class name="com.supporthawk.tests.josh.postlogin.AdminTest"/>
+            <class name="com.supporthawk.tests.josh.prelogin.JoshPreLoginDocumentTextTest"/>
+        </classes>
+    </test>
+
+</suite>

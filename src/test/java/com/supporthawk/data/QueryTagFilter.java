@@ -152,6 +152,29 @@ public final class QueryTagFilter {
         return selected;
     }
 
+    /**
+     * Filters context-retention conversations by conversation-level {@code tags}
+     * against {@code -DtestGroups}. No/blank property → returns the same list.
+     */
+    public static List<ContextConversation> filterContextConversations(
+            List<ContextConversation> conversations
+    ) {
+        if (conversations == null) {
+            return List.of();
+        }
+        if (!isFilterActive()) {
+            return conversations;
+        }
+        String suiteName = requestedTestGroups().trim();
+        List<ContextConversation> selected = new ArrayList<>();
+        for (ContextConversation conversation : conversations) {
+            if (conversation != null && hasTag(conversation.getTags(), suiteName)) {
+                selected.add(conversation);
+            }
+        }
+        return selected;
+    }
+
     private static Set<String> parseLanguages(String raw) {
         Set<String> allowed = new LinkedHashSet<>();
         if (raw == null) {

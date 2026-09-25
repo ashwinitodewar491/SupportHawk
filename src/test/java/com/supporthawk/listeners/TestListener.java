@@ -105,17 +105,25 @@ public class TestListener implements ITestListener, ISuiteListener {
     }
 
     /**
-     * Admin soft-collects per-query results itself. Skip the aggregated
-     * TestNG failure/success so the dashboard is not polluted with a synthetic row.
+     * Soft-aggregated methods collect per-query rows themselves. Skip the
+     * synthetic TestNG success/failure row so the dashboard is not polluted.
      */
-    private static boolean isAdminAggregatedMethod(ITestResult result) {
+    private static boolean isSoftAggregatedMethod(ITestResult result) {
         String className = result.getTestClass().getRealClass().getName();
         String method = result.getMethod().getMethodName();
-        return className.contains("AdminTest") && "testAdminDocumentUpload".equals(method);
+        if (className.contains("AdminTest") && "testAdminDocumentUpload".equals(method)) {
+            return true;
+        }
+        if (className.contains("JoshPreLoginDocumentTextTest")
+                && "testJoshPreLoginDocumentTextQueries".equals(method)) {
+            return true;
+        }
+        return className.contains("FintechPreLoginContextRetentionTest")
+                && "testHomeLoanContextRetention".equals(method);
     }
 
     private static void recordQueryResult(ITestResult result, QueryResult.Status status) {
-        if (isAdminAggregatedMethod(result)) {
+        if (isSoftAggregatedMethod(result)) {
             QueryReportRecorder.clear();
             return;
         }
