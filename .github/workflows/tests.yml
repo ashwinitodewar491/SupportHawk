@@ -9,7 +9,7 @@ on:
       - master
   schedule:
     # Daily at 08:00 IST against admin-test-improvements (smoke)
-    - cron: "0 8 * * *"
+    - cron: "30 2 * * *"
       timezone: "Asia/Kolkata"
   workflow_dispatch:
     inputs:

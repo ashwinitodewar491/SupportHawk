@@ -3,7 +3,7 @@
 
 <!--
   Guarantees Josh document lifecycle order:
-  BeforeGroups setup → AdminTest → JoshPreLoginDocumentTextTest → AfterGroups cleanup
+  AdminTest (upload + queries, keep doc) → JoshPreLoginDocumentTextTest → AfterGroups cleanup (admin delete)
 
   Run:
     mvn test -DsuiteXmlFile=src/test/resources/josh-document-flow.xml

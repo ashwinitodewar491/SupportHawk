@@ -16,9 +16,8 @@ import java.util.List;
 /**
  * Shared orchestration for Josh document-query tests driven by document_queries.json.
  *
- * <p>Upload/delete for the shared Admin + pre-login flow is owned by
- * {@link JoshDocumentFlowBase}. This runner still supports a self-contained
- * upload→query→delete path via {@link #runDocumentQuerySuite}.
+ * <p>Admin upload+query lives here (same path as before). Document delete for the
+ * shared Admin + pre-login flow is owned by {@link JoshDocumentFlowBase} {@code @AfterGroups}.
  */
 public final class JoshDocumentTestRunner {
 
@@ -28,8 +27,8 @@ public final class JoshDocumentTestRunner {
     }
 
     /**
-     * Self-contained admin path: for each filtered document, upload, query, then delete.
-     * Prefer the shared Josh document flow hooks for suite-level lifecycle.
+     * Admin path: for each filtered document, upload/prepare and run queries.
+     * Does <strong>not</strong> delete — suite cleanup deletes after pre-login finishes.
      */
     public static void runDocumentQuerySuite(
             Page page,
@@ -42,28 +41,7 @@ public final class JoshDocumentTestRunner {
         List<String> failures = new ArrayList<>();
 
         for (DocumentQuerySet documentSet : documents) {
-            processDocument(page, loginPage, documentSet, failures, testClass, testMethod, true, true);
-        }
-
-        failIfAny(failures, failureSummaryPrefix);
-    }
-
-    /**
-     * Admin queries only — documents must already be uploaded (e.g. by flow setup).
-     * Does not upload or delete.
-     */
-    public static void runAdminDocumentQueriesOnly(
-            Page page,
-            String testClass,
-            String testMethod,
-            String failureSummaryPrefix
-    ) throws Exception {
-        LoginPage loginPage = new LoginPage(page);
-        List<DocumentQuerySet> documents = loadFilteredDocuments();
-        List<String> failures = new ArrayList<>();
-
-        for (DocumentQuerySet documentSet : documents) {
-            processDocument(page, loginPage, documentSet, failures, testClass, testMethod, false, false);
+            processDocument(page, loginPage, documentSet, failures, testClass, testMethod);
         }
 
         failIfAny(failures, failureSummaryPrefix);
@@ -108,17 +86,6 @@ public final class JoshDocumentTestRunner {
     }
 
     /**
-     * Uploads and prepares every filtered document (removes any stale copy first).
-     * Used by Josh flow {@code @BeforeGroups} setup.
-     */
-    public static void uploadAllFilteredDocuments(Page page) throws Exception {
-        LoginPage loginPage = new LoginPage(page);
-        for (DocumentQuerySet documentSet : loadFilteredDocuments()) {
-            DocumentLifecycleManager.uploadAndPrepareDocument(page, loginPage, documentSet);
-        }
-    }
-
-    /**
      * Deletes every filtered document. Used by Josh flow {@code @AfterGroups} cleanup.
      */
     public static void deleteAllFilteredDocuments(Page page) {
@@ -151,38 +118,24 @@ public final class JoshDocumentTestRunner {
             DocumentQuerySet documentSet,
             List<String> failures,
             String testClass,
-            String testMethod,
-            boolean upload,
-            boolean delete
+            String testMethod
     ) throws Exception {
         List<QueryModel> queries = documentSet.getQueries();
         Assert.assertNotNull(queries, "queries missing for document: " + documentSet.getDocument());
         Assert.assertFalse(queries.isEmpty(), "queries empty for document: " + documentSet.getDocument());
 
-        String documentTitle;
-        if (upload) {
-            documentTitle = DocumentLifecycleManager.uploadAndPrepareDocument(page, loginPage, documentSet);
-        } else {
-            documentTitle = documentSet.getDocument();
-            Assert.assertNotNull(documentTitle, "document title missing");
-            Assert.assertFalse(documentTitle.isBlank(), "document title blank");
-        }
+        // Existing working Admin upload path (preview + edit included). Keep document for pre-login.
+        String documentTitle = DocumentLifecycleManager.uploadAndPrepareDocument(page, loginPage, documentSet);
 
-        try {
-            DocumentQueryRunner.executeDocumentQueries(
-                    page,
-                    loginPage,
-                    documentTitle,
-                    queries,
-                    failures,
-                    testClass,
-                    testMethod
-            );
-        } finally {
-            if (delete) {
-                DocumentLifecycleManager.deleteDocument(loginPage, documentTitle);
-            }
-        }
+        DocumentQueryRunner.executeDocumentQueries(
+                page,
+                loginPage,
+                documentTitle,
+                queries,
+                failures,
+                testClass,
+                testMethod
+        );
     }
 
     private static void failIfAny(List<String> failures, String failureSummaryPrefix) {

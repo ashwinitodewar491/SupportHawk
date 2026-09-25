@@ -9,9 +9,9 @@ import com.supporthawk.admin.AdminLoginHelper;
 import com.supporthawk.config.AppConfig;
 
 /**
- * Short-lived Playwright session for Josh admin document setup/cleanup.
- * Independent of {@code BasePage} so {@code @BeforeGroups}/{@code @AfterGroups}
- * can run without relying on a per-test browser.
+ * Short-lived Playwright session for Josh admin document <strong>cleanup</strong> only.
+ * Independent of {@code BasePage} so {@code @AfterGroups} can delete without the
+ * per-test browser. Not used for upload (AdminTest owns upload).
  */
 public final class JoshDocumentAdminSession {
 
@@ -24,7 +24,7 @@ public final class JoshDocumentAdminSession {
     }
 
     /**
-     * Launches a headless/headed browser matching {@link AppConfig}, logs in as admin,
+     * Launches a browser matching {@link AppConfig}, logs in as admin,
      * runs {@code action}, then closes the browser.
      */
     public static void withAdminPage(PageAction action) throws Exception {
