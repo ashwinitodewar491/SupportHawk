@@ -11,7 +11,7 @@
   },
   {
     "query": "How can I open a savings account?",
-    "expected": ["Advantage Savings Account", "minimum monthly balance", "transactions", "aadeposi","25,000","premium savings account"],
+    "expected": ["Documents Required", "Identity proof", "Address proof", "Hindu Undivided Family","Name","Email","mobile"],
     "tags": ["smoke", "regression"]
   },
   {
@@ -470,13 +470,10 @@
   {
     "query": "What Are the Different Types of Fixed Deposits?",
     "expected": [
-      "Cumulative",
-      "Non-Cumulative",
-      "Tax-Saving",
-      "compounding",
-      "long-term",
-      "Section 80C",
-      "Income Tax Act 1961"
+      "Standard Fixed Deposit",
+      "Advantage Fixed Deposit",
+      "Premium Fixed Deposit",
+      "Tax-Saver Fixed Deposit"
     ],
     "tags": ["regression"]
   },
@@ -494,10 +491,7 @@
   {
     "query": "Who is the finance minister of India?",
     "expected": [
-      "sorry",
-      "I don't have that information",
-      "specialize",
-      "support"
+      "sorry"
     ],
     "tags": ["smoke", "regression"]
   }

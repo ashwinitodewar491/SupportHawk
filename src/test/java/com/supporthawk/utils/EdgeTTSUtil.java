@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 
@@ -19,19 +21,47 @@ import javax.sound.sampled.AudioSystem;
  */
 public final class EdgeTTSUtil {
 
+    /**
+     * Language labels from {@code QueryModel.language} → Edge TTS neural voices.
+     * Matching is case-insensitive.
+     */
+    private static final Map<String, String> LANGUAGE_VOICES = Map.ofEntries(
+            Map.entry("english", "en-IN-NeerjaNeural"),
+            Map.entry("hindi", "hi-IN-SwaraNeural"),
+            Map.entry("bengali", "bn-IN-TanishaaNeural"),
+            Map.entry("marathi", "mr-IN-AarohiNeural"),
+            Map.entry("gujarati", "gu-IN-DhwaniNeural"),
+            Map.entry("tamil", "ta-IN-PallaviNeural"),
+            Map.entry("kannada", "kn-IN-SapnaNeural"),
+            Map.entry("telugu", "te-IN-ShrutiNeural"),
+            Map.entry("malayalam", "ml-IN-SobhanaNeural")
+    );
+
     private EdgeTTSUtil() {
     }
 
     /**
-     * Converts input text to speech and writes it to a WAV file suitable for
-     * --use-file-for-fake-audio-capture.
+     * Converts input text to speech using {@code tts.voice} from config
+     * (legacy callers with no language).
      *
      * @param text text to convert into speech
      * @return path to generated wav file
      */
     public static Path generateWavFile(String text) {
+        return generateWavFile(text, null);
+    }
+
+    /**
+     * Converts input text to speech using a voice resolved from {@code language}.
+     * Unknown or blank language falls back to {@code tts.voice} from config.
+     *
+     * @param text     text to convert into speech
+     * @param language query language from {@code QueryModel} (e.g. "Hindi"), or null
+     * @return path to generated wav file
+     */
+    public static Path generateWavFile(String text, String language) {
         try {
-            String voice = ConfigReader.get("tts.voice");
+            String voice = resolveVoice(language);
             String rate = ConfigReader.get("tts.rate");
             String outputFolder = ConfigReader.get("tts.output.folder");
             int leadSilenceMs = Integer.parseInt(ConfigReader.get("tts.lead.silence.ms"));
@@ -59,33 +89,45 @@ public final class EdgeTTSUtil {
     }
 
     /**
+     * Resolves an Edge TTS voice for the given language label.
+     * Falls back to {@code tts.voice} when language is null/blank/unknown.
+     */
+    public static String resolveVoice(String language) {
+        if (language != null && !language.isBlank()) {
+            String mapped = LANGUAGE_VOICES.get(language.trim().toLowerCase(Locale.ROOT));
+            if (mapped != null) {
+                return mapped;
+            }
+        }
+        return ConfigReader.get("tts.voice");
+    }
+
+    /**
      * Calls edge-tts using configured neural voice and rate.
      */
     private static void generateWithEdgeTts(Path textFile, String voice, String rate, Path mp3File) throws Exception {
-        try {
-            runProcess(
-                    Arrays.asList(
-                            "python", "-m", "edge_tts",
-                            "--voice", voice,
-                            "--rate", rate,
-                            "--file", textFile.toAbsolutePath().toString(),
-                            "--write-media", mp3File.toAbsolutePath().toString()
-                    ),
-                    "edge-tts synthesis failed"
-            );
-        } catch (Exception firstError) {
-            // Windows setups often use the "py" launcher instead of "python".
-            runProcess(
-                    Arrays.asList(
-                            "py", "-m", "edge_tts",
-                            "--voice", voice,
-                            "--rate", rate,
-                            "--file", textFile.toAbsolutePath().toString(),
-                            "--write-media", mp3File.toAbsolutePath().toString()
-                    ),
-                    "edge-tts synthesis failed (python/py fallback)"
-            );
+        runProcess(
+                Arrays.asList(
+                        pythonExecutable(), "-m", "edge_tts",
+                        "--voice", voice,
+                        "--rate", rate,
+                        "--file", textFile.toAbsolutePath().toString(),
+                        "--write-media", mp3File.toAbsolutePath().toString()
+                ),
+                "edge-tts synthesis failed"
+        );
+    }
+
+    /**
+     * Windows local setups use the {@code py} launcher; Linux/macOS CI uses {@code python3}
+     * (as installed by the GitHub Actions workflow).
+     */
+    private static String pythonExecutable() {
+        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        if (os.contains("win")) {
+            return "py";
         }
+        return "python3";
     }
 
     /**

@@ -7,11 +7,13 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.supporthawk.config.AppConfig;
 import com.supporthawk.data.QueryModel;
+import com.supporthawk.listeners.TestListener;
 import com.supporthawk.utils.EdgeTTSUtil;
 import com.supporthawk.utils.ScreenshotUtil;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,6 +25,7 @@ import java.util.List;
 
 /** Every UI test class extends this. Do not modify for individual test needs — page objects and
  * test classes should only ever use the {@code page} field this sets up. */
+@Listeners(TestListener.class)
 public class BasePage {
 
     protected Playwright playwright;
@@ -40,8 +43,9 @@ public class BasePage {
         launchArgs.add("--use-fake-ui-for-media-stream");
 
         String voiceQuery = extractVoiceQuery(params);
+        String voiceLanguage = extractVoiceLanguage(params);
         if (voiceQuery != null && !voiceQuery.isBlank()) {
-            currentVoiceWavPath = EdgeTTSUtil.generateWavFile(voiceQuery);
+            currentVoiceWavPath = EdgeTTSUtil.generateWavFile(voiceQuery, voiceLanguage);
             launchArgs.add("--use-fake-device-for-media-stream");
             launchArgs.add("--use-file-for-fake-audio-capture=" + currentVoiceWavPath.toAbsolutePath());
             System.setProperty("current.voice.wav.path", currentVoiceWavPath.toAbsolutePath().toString());
@@ -115,15 +119,23 @@ public class BasePage {
     }
 
     private String extractVoiceQuery(Object[] params) {
+        QueryModel queryModel = extractQueryModel(params);
+        return queryModel != null ? queryModel.getQuery() : null;
+    }
+
+    private String extractVoiceLanguage(Object[] params) {
+        QueryModel queryModel = extractQueryModel(params);
+        return queryModel != null ? queryModel.getLanguage() : null;
+    }
+
+    private QueryModel extractQueryModel(Object[] params) {
         if (params == null) {
             return null;
         }
-
         for (int i = 0; i < params.length; i++) {
             Object param = params[i];
             if (param instanceof QueryModel) {
-                QueryModel queryModel = (QueryModel) param;
-                return queryModel.getQuery();
+                return (QueryModel) param;
             }
         }
         return null;

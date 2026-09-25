@@ -1,8 +1,11 @@
-package com.supporthawk.customer;
+package com.supporthawk.fintech.customer;
 
 import com.supporthawk.data.QueryModel;
 import com.supporthawk.pages.QueryPage;
+import com.supporthawk.report.QueryReportRecorder;
+import com.supporthawk.report.QueryResult;
 import com.supporthawk.utils.KeywordValidator;
+import com.supporthawk.utils.ScreenshotUtil;
 import org.testng.Assert;
 
 import java.util.List;
@@ -24,13 +27,33 @@ public final class CustomerQueryRunner {
 
     public static void executeTextQuery(QueryPage queryPage, QueryModel queryModel) {
         logIntentStart(queryModel, "TEXT");
+        QueryReportRecorder.begin(
+                "Customer Post-Login",
+                "CustomerQueryRunner",
+                "executeTextQuery",
+                queryModel
+        );
         String response = executeByIntent(queryPage, queryModel, false);
+        QueryResult qr = QueryReportRecorder.current();
+        if (qr != null) {
+            qr.setActualResponse(response);
+        }
         validateByIntent(queryPage, queryModel, response);
     }
 
     public static void executeVoiceQuery(QueryPage queryPage, QueryModel queryModel) {
         logIntentStart(queryModel, "VOICE");
+        QueryReportRecorder.begin(
+                "Customer Post-Login",
+                "CustomerQueryRunner",
+                "executeVoiceQuery",
+                queryModel
+        );
         String response = executeByIntent(queryPage, queryModel, true);
+        QueryResult qr = QueryReportRecorder.current();
+        if (qr != null) {
+            qr.setActualResponse(response);
+        }
         validateByIntent(queryPage, queryModel, response);
     }
 
@@ -105,6 +128,24 @@ public final class CustomerQueryRunner {
         System.out.println("Keyword validation: " + (passed ? "PASSED" : "FAILED"));
         System.out.println("--------------------------------------------------");
 
+        QueryResult qr = QueryReportRecorder.current();
+        if (qr != null) {
+            qr.setExpectedResponse(String.valueOf(expectedKeywords));
+            qr.setActualResponse(response);
+            qr.setResponseValidationStatus(
+                    passed ? QueryResult.Status.PASSED.name() : QueryResult.Status.FAILED.name()
+            );
+            if (!passed) {
+                qr.setErrorMessage(
+                        "Not enough keywords matched in BOT RESPONSE. Needed at least " + requiredMatches
+                                + " but found " + totalMatched
+                                + ". Expected: " + expectedKeywords
+                                + ". Matched: " + matchedKeywords
+                );
+                ScreenshotUtil.captureForLabel(queryPage.getPage(), queryModel.getQuery());
+            }
+        }
+
         Assert.assertTrue(
                 passed,
                 "Not enough keywords matched in BOT RESPONSE. Needed at least " + requiredMatches
@@ -119,6 +160,23 @@ public final class CustomerQueryRunner {
     private static void runFeedbackAndReferenceValidation(QueryPage queryPage, QueryModel queryModel) {
         queryPage.provideRandomFeedback("This is automated test feedback for thumbs down.");
         queryPage.getPage().waitForTimeout(10000);
-        queryPage.validateReferenceLinks(queryModel.getExpected());
+        QueryResult qr = QueryReportRecorder.current();
+        try {
+            queryPage.validateReferenceLinks(queryModel.getExpected());
+            if (qr != null) {
+                qr.setDocumentValidationStatus(QueryResult.Status.PASSED.name());
+            }
+        } catch (AssertionError e) {
+            if (qr != null) {
+                qr.setDocumentValidationStatus(QueryResult.Status.FAILED.name());
+                if (qr.getErrorMessage() == null || qr.getErrorMessage().isBlank()) {
+                    qr.setErrorMessage(e.getMessage());
+                } else {
+                    qr.setErrorMessage(qr.getErrorMessage() + "\n" + e.getMessage());
+                }
+                ScreenshotUtil.captureForLabel(queryPage.getPage(), queryModel.getQuery());
+            }
+            throw e;
+        }
     }
 }
