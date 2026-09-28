@@ -172,6 +172,11 @@ public final class ContextRetentionRunner {
         try {
             // Same chat: no navigate, no new Page, no conversation clear.
             String response = queryPage.askQuestionInSameChat(question.getQuery());
+            // TEMP DIAGNOSTIC: remove once context-retention response capture is confirmed complete.
+            System.out.println("[Context Diagnostic] Question ID: " + questionId);
+            System.out.println("[Context Diagnostic] Captured response length: "
+                    + (response != null ? response.length() : 0));
+            System.out.println("[Context Diagnostic] Captured response:\n" + response);
             recordKeywordValidation(page, qr, conversation, question, questionId, response, failures);
         } catch (AssertionError | RuntimeException queryFailure) {
             if (qr.getResponseValidationStatus() == null) {

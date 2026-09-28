@@ -1,7 +1,9 @@
 package com.supporthawk.pages;
 
+import com.microsoft.playwright.APIResponse;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.options.RequestOptions;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.supporthawk.config.AppConfig;
 import com.supporthawk.config.ConfigReader;
@@ -9,6 +11,7 @@ import com.supporthawk.config.TenantRoutes;
 import com.supporthawk.utils.EdgeTTSUtil;
 import com.supporthawk.utils.RetryUtils;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +22,8 @@ import java.util.List;
  * Holds locators and actions for asking a question and reading the AI reply.
  */
 public class QueryPage {
+
+    private static final int REFERENCE_MAX_REDIRECTS = 20;
 
     private final Page page;
 
@@ -240,8 +245,8 @@ public class QueryPage {
     }
 
     /**
-     * Validates reference links in the latest AI response by navigating to each href
-     * and confirming the page loads with body content. Checks every reference link even
+     * Validates reference links in the latest AI response by sending an HTTP GET to each
+     * href (following redirects) and confirming the final response is 2xx. Checks every reference link even
      * when one fails. Skips without failing when no "References:" section or links
      * are present.
      *
@@ -279,28 +284,38 @@ public class QueryPage {
 
         for (int i = 0; i < hrefs.size(); i++) {
             String href = hrefs.get(i);
+            String requestUrl = resolveReferenceUrl(queryPageUrl, href);
             String failureReason = null;
+            String contentType = null;
 
+            APIResponse response = null;
             try {
-                // Retry only this link's navigate/load (30s Playwright timeout per attempt).
-                // Empty-content results are not retried — they are validation outcomes.
-                RetryUtils.execute(3, 2000, () -> {
-                    page.navigate(href);
-                    page.waitForLoadState();
-                });
+                // HTTP GET via the page's request context (shares browser cookies) instead of
+                // page.navigate(): PDF/MinIO URLs abort navigation (net::ERR_ABORTED) even when valid.
+                // Retry only thrown request errors; non-2xx is a validation outcome.
+                // Redirects (301/302/...) are followed; only the final status is judged.
+                response = RetryUtils.execute(3, 2000, () -> page.request().get(
+                        requestUrl,
+                        RequestOptions.create().setMaxRedirects(REFERENCE_MAX_REDIRECTS)
+                ));
+                contentType = response.headers().get("content-type");
 
-                String pageContent = page.locator("body").innerText();
-                if (pageContent == null || pageContent.trim().isEmpty()) {
-                    failureReason = "reference page has no content";
+                if (!response.ok()) {
+                    failureReason = "HTTP " + response.status() + " " + response.statusText();
                 }
             } catch (Exception e) {
-                failureReason = "navigation or page error: " + e.getMessage();
+                failureReason = "request error: " + e.getMessage();
+            } finally {
+                if (response != null) {
+                    response.dispose();
+                }
             }
 
             boolean passed = failureReason == null;
 
             System.out.println("--------------------------------------------------");
             System.out.println("Reference URL: " + href);
+            System.out.println("Reference Content-Type: " + (contentType != null ? contentType : "<none>"));
             System.out.println("Reference page loaded: " + (passed ? "PASSED" : "FAILED"));
             System.out.println("Reference validation: " + (passed ? "PASSED" : "FAILED"));
             if (!passed) {
@@ -314,8 +329,6 @@ public class QueryPage {
                                 + "Reason: " + failureReason
                 );
             }
-
-            restoreQueryPage(queryPageUrl);
         }
 
         if (!failures.isEmpty()) {
@@ -325,6 +338,13 @@ public class QueryPage {
                             + String.join("\n\n", failures)
             );
         }
+    }
+
+    private String resolveReferenceUrl(String baseUrl, String href) {
+        if (href.startsWith("http://") || href.startsWith("https://")) {
+            return href;
+        }
+        return URI.create(baseUrl).resolve(href).toString();
     }
 
     /**
@@ -496,9 +516,9 @@ public class QueryPage {
 
     /**
      * Asks a follow-up in the <strong>current</strong> chat without navigating or
-     * clearing history. Waits for processing to finish, then for a <em>new</em>
-     * {@code responseContainer} (count increase) before reading the latest reply.
-     * Used by multi-turn context-retention flows.
+     * clearing history. Waits for processing to finish, for a <em>new</em>
+     * {@code responseContainer} (count increase), then for that reply to finish
+     * streaming before reading it. Used by multi-turn context-retention flows.
      */
     public String askQuestionInSameChat(String query) {
         int previousResponseCount = page.locator(responseContainer).count();
@@ -507,9 +527,30 @@ public class QueryPage {
         waitForResponse();
         waitForAdditionalAssistantResponse(previousResponseCount);
 
-        Locator responses = page.locator(responseContainer);
-        responses.last().waitFor();
-        return responses.last().innerText();
+        Locator latestResponse = page.locator(responseContainer).last();
+        waitForLatestResponseComplete(latestResponse);
+        return latestResponse.innerText();
+    }
+
+    /**
+     * Waits until the latest reply has finished streaming. The feedback controls are
+     * rendered in the reply's message container only after streaming ends; must be scoped
+     * to that container because earlier turns in the same chat already show them.
+     */
+    private void waitForLatestResponseComplete(Locator latestResponse) {
+        long timeoutMs = Long.parseLong(ConfigReader.get("voice.response.timeout.ms"));
+        try {
+            latestResponse.locator("xpath=..").locator(thumbsUpButton).waitFor(
+                    new Locator.WaitForOptions()
+                            .setState(WaitForSelectorState.VISIBLE)
+                            .setTimeout((double) timeoutMs)
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "AI response did not finish rendering in the same chat within " + timeoutMs + " ms.",
+                    e
+            );
+        }
     }
 
     /**
