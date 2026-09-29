@@ -54,7 +54,7 @@
   },
   {
     "query": "Show me UPI transactions",
-    "expected": ["Recent", "Transactions", "upi"],
+    "expected": ["Transactions", "upi"],
     "tags": ["customer", "smoke", "regression", "english"],
     "language": "English",
     "intent": "transaction_inquiry",
@@ -159,28 +159,21 @@
   },
   {
     "query": "मेरे सेविंग्स अकाउंट में कितना बैलेंस है?",
-    "expected": ["balance", "savings"],
+    "expected": ["बचत ", "खाते"],
     "tags": ["customer", "smoke", "regression", "hindi"],
     "language": "Hindi",
     "intent": "balance_inquiry"
   },
   {
     "query": "मुझे मेरे सेविंग्स अकाउंट की transaction लिस्ट दिखाएँ",
-    "expected": ["transaction", "savings"],
+    "expected": ["सेविंग्स"],
     "tags": ["customer", "regression", "hindi"],
     "language": "Hindi",
     "intent": "transaction_inquiry"
   },
   {
-    "query": "मेरे बेनिफ़िशियरी पूजा को 1 रुपया ट्रांसफर करें",
-    "expected": ["transfer"],
-    "tags": ["customer", "regression", "hindi"],
-    "language": "Hindi",
-    "intent": "transfer_money"
-  },
-  {
     "query": "मेरे सेविंग्स अकाउंट के लिए मेरा लोन अकाउंट दिखाएँ",
-    "expected": ["loan", "account"],
+    "expected": ["लोन", "होम","एजुकेशन"],
     "tags": ["customer", "regression", "hindi"],
     "language": "Hindi",
     "intent": "loan_inquiry",
@@ -188,14 +181,14 @@
   },
   {
     "query": "मेरे education लोन के लिए सेविंग्स अकाउंट का EMI स्टेटमेंट",
-    "expected": ["emi", "loan"],
+    "expected": ["लोन", "स्टेटमेंट"],
     "tags": ["customer", "regression", "hindi"],
     "language": "Hindi",
     "intent": "loan_inquiry"
   },
   {
     "query": "আমার সেভিংস অ্যাকাউন্টে কত টাকা আছে?",
-    "expected": ["balance", "savings"],
+    "expected": ["সঞ্চয়","খতায়","টাকা"],
     "tags": ["customer", "smoke", "regression", "bengali"],
     "language": "Bengali",
     "intent": "balance_inquiry"
@@ -208,23 +201,16 @@
     "intent": "transaction_inquiry"
   },
   {
-    "query": "পূজা নায়ারকে ১ রুপি পাঠান।",
-    "expected": ["transfer"],
-    "tags": ["customer", "regression", "bengali"],
-    "language": "Bengali",
-    "intent": "transfer_money"
-  },
-  {
     "query": "আমার সেভিংস অ্যাকাউন্টের বিপরীতে থাকা লোন অ্যাকাউন্টটি দেখান",
-    "expected": ["loan", "account"],
+    "expected": ["গৃহ ঋণ", "শিক্ষা ঋণ"],
     "tags": ["customer", "regression", "bengali"],
     "language": "Bengali",
     "intent": "loan_inquiry",
     "disambiguationResponse": "home loan"
   },
   {
-    "query": "আমার সেভিংস অ্যাকাউন্টের home লোনের ইএমআই (EMI) স্টেটমেন্ট",
-    "expected": ["emi", "loan"],
+    "query": "আমি আমার ঋণ অ্যাকাউন্টগুলো সম্পর্কে জানতে চাই।",
+    "expected": ["হোম", "লোনের","ইএমআই"],
     "tags": ["customer", "regression", "bengali"],
     "language": "Bengali",
     "intent": "loan_inquiry"

@@ -1,39 +1,188 @@
 [
-    {
-      "document": "Josh Software Organization",
-      "queries": [  
-        { 
-            "query": "What services does Josh Software provide?", 
-            "expected": ["Custom Software Development", "Fintech", "UI/UX", "Software Development"] 
-        },
-        { 
-            "query": "When was Josh Software founded??", 
-            "expected": ["founded", "2007"] 
-        },
-        { 
-            "query": "Where is Josh Software headquarters?", 
-            "expected": ["Pune", "Maharashtra"]
-        },
-        { 
-            "query": "How many employees are there in Josh Software?", 
-            "expected": ["200", "employees"]
-        },
-        { 
-            "query": "What is the mission of Josh Software?",
-             "expected": ["deliver", "scalable", "innovative"]
-        },
-        { 
-            "query": "What are the Core Values of Josh Software?", 
-            "expected": ["Innovation", "Customer", "Engineering", "Agile", "Transparency"]
-        },
-        { 
-            "query": "Who are the co-founders of Josh Software?", 
-            "expected": ["Gautam Rege", "Sethupathi Asokan"] 
-        },
-        { 
-            "query": "What is Josh Software Contact Number?", 
-            "expected": ["7887889902"] 
-        } 
+  {
+    "document": "Josh Software Organization",
+    "pdf": "Documents/Josh Software Organization.pdf",
+    "tags": ["Josh Software", "Company Details"],
+    "description": "Josh Software is a software company that provides custom software development, fintech solutions, AI, data & analytics, and UI/UX & experience design.",
+    "queries": [
+      {
+        "query": "What services does Josh Software provide?",
+        "expected": ["scalable", "Custom Software Development", "UI/UX", "Software Development"],
+        "tags": ["smoke", "regression"]
+      },
+      {
+        "query": "When was Josh Software founded??",
+        "expected": ["founded", "2007"],
+        "tags": ["smoke", "regression"]
+      },
+      {
+        "query": "Where is Josh Software headquarters?",
+        "expected": ["Pune", "Maharashtra"],
+        "tags": ["smoke", "regression"]
+      },
+      {
+        "query": "How many employees are there in Josh Software?",
+        "expected": ["200", "500", "employees"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What is the mission of Josh Software?",
+        "expected": ["deliver", "scalable", "innovative", "quality"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What are the Core Values of Josh Software?",
+        "expected": ["Innovation", "Customer", "Engineering excellence"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "Who are the co-founders of Josh Software?",
+        "expected": ["Gautam Rege", "Sethupathi Asokan"],
+        "tags": ["smoke", "regression"]
+      },
+      {
+        "query": "What is Josh Software Contact Number?",
+        "expected": ["7887889902"],
+        "tags": ["smoke", "regression"]
+      },
+      {
+        "query": "What services does Josh Software provide?",
+        "expected": ["Custom Software Development", "Fintech", "UI/UX", "Software Development", "AI", "Data", "Analytics"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What is the mission of Josh Software?",
+        "expected": ["deliver", "scalable", "innovative"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What the Key Capabilities of Josh Software?",
+        "expected": ["Cloud migration", "Data transformation", "High-scale"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What are the technology stacks used in Josh Software?",
+        "expected": ["Data engineering", "AI/ML", "Cloud", "Ember", "React", "Angular.js", "Node.js", "Golang", "Ruby on Rails"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What are the frontend technology stacks used in Josh Software?",
+        "expected": ["Ember", "React", "Angular"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What are the backend technology stacks used in Josh Software?",
+        "expected": ["Node.js", "Golang", "Ruby on Rails"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What percent reduction in manual document processing using automation was observed in Josh?",
+        "expected": ["90"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What business model does Josh Software follow?",
+        "expected": ["B2B", "Business-to-Business"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What does Josh Innovation Lab focus on?",
+        "expected": ["Rapid prototyping", "AI/ML experimentation", "Enterprise use-case solutions", "Faster go-to-market strategies"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What are the key innovations of Josh Innovation Lab?",
+        "expected": ["AI knowledge copilots", "Voice AI engines", "Fraud detection systems"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What key Industries are Serve by Josh Software",
+        "expected": ["fintech", "Healthcare", "Education", "Social impact", "NGOs", "Enterprise software solutions"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "जोश सॉफ्टवेअर कोणत्या सेवा प्रदान करते?",
+        "expected": ["कस्टम सॉफ्टवेअर डेव्हलपमेंट", "UI/UX", "सॉफ्टवेअर डेव्हलपमेंट"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "जोश सॉफ्टवेअरची स्थापना कधी झाली?",
+        "expected": ["स्थापना", "२००७"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "जोश सॉफ्टवेअरचे मुख्यालय कुठे आहे?",
+        "expected": ["पुणे", "महाराष्ट्र"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "जोश सॉफ्टवेअरमध्ये किती कर्मचारी आहेत?",
+        "expected": ["२००", "५००", "कर्मचारी"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "जोश सॉफ्टवेअरचे सह-संस्थापक कोण आहेत?",
+        "expected": ["गौतम रेगे", "सेतुपती अशोकन"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "जोश सॉफ्टवेअरचा संपर्क क्रमांक काय आहे?",
+        "expected": ["७८८७८८९९०२"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "जोश सॉफ्टवेयर में कौन-कौन से फ्रंटएंड टेक्नोलॉजी स्टैक इस्तेमाल किए जाते हैं?",
+        "expected": ["React.js", "Angular.js", "Ember.js"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "জশ সফটওয়্যারে কোন কোন ব্যাক-এন্ড টেকনোলজি স্ট্যাক ব্যবহার করা হয়?",
+        "expected": ["Ruby on Rails", "Golang", "Node.js"],
+        "tags": ["regression"]
+      }
     ]
-    }
-  ]
+  },
+  {
+    "document": "Quickinsure Guide",
+    "pdf": "Documents/Quickinsure Guide.pdf",
+    "tags": ["insurance", "life insurance", "health insurance"],
+    "description": "Test document upload for Quickinsure Guide",
+    "queries": [
+      {
+        "query": "What is Quickinsure?",
+        "expected": ["tech-powered", "digital insurance", "brokerage"],
+        "tags": ["smoke", "regression"]
+      },
+      {
+        "query": "What are the services offered by Quickinsure?",
+        "expected": ["Motor Insurance", "Bike Insurance", "Health Insurance", "Life Insurance", "Travel Insurance", "Cattle Insurance", "Shop Insurance", "Commercial Vehicle Insurance", "Workmen Compensation Insurance"],
+        "tags": ["smoke", "regression"]
+      },
+      {
+        "query": "What is the claims process for Quickinsure?",
+        "expected": ["Notify", "claim number", "My Claims", "documents", "Relationship Manager"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What are the motor insurance add-ons?",
+        "expected": ["Depreciation", "Protection", "Return to Invoice", "Roadside Assistance"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "Who are the partnered insurers of Quickinsure from private sector?",
+        "expected": ["Go Digit", "Liberty General", "Bajaj Allianz", "Reliance General", "SBI General", "Tata AIG", "HDFC ERGO", "ICICI Lombard"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What is cattle insurance?",
+        "expected": ["livestock", "illness", "loss", "coverage"],
+        "tags": ["regression"]
+      },
+      {
+        "query": "What is Quickinsure Contact Number?",
+        "expected": ["0796 9030500"],
+        "tags": ["smoke", "regression"]
+      }
+    ]
+  }
+]

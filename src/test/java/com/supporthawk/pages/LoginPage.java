@@ -4,6 +4,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
+import com.supporthawk.config.TenantRoutes;
 
 import java.nio.file.Path;
 
@@ -27,12 +28,13 @@ public class LoginPage {
     private final String customerLoginError =
             "div.text-destructive:has-text('not found')";
     private final String documentsPage = "a[href='/documents']:visible";
-    private final String queryPage = "a[href='/query']:visible";
+    private final String queryPage =
+            "a[href='" + TenantRoutes.queryPath(TenantRoutes.Tenant.JOSH) + "']:visible";
     private final String uploadDocumentsButton = "text = Upload Document";
     private final String uploadPdfButton = "#upload-pdf";
     private final String documentTitleInput = "#upload-title";
     private final String documentDescriptionInput = "#upload-description";
-    private final String documentTagsInput = "#react-select-2-input";
+    private final String documentTagsInput = "[id^='react-select'][id$='-input']";
     private final String submitButton = "button[type='submit']";
     private final String deleteDocumentButton = "[title='Delete document']";
     private final String confirmDeleteButton = "button:has-text('Delete')";
@@ -102,11 +104,12 @@ public class LoginPage {
     }
 
     /**
-     * Waits until Admin login either leaves {@code /login} or shows the credentials error.
+     * Waits until Admin login either leaves the Josh login path or shows the credentials error.
      */
     public void waitForAdminLoginOutcome() {
+        String loginPath = TenantRoutes.loginPath(TenantRoutes.Tenant.JOSH);
         page.waitForCondition(() ->
-                !page.url().toLowerCase().contains("/login")
+                !page.url().toLowerCase().contains(loginPath)
                         || page.locator(adminLoginError).isVisible()
         );
     }

@@ -84,4 +84,26 @@ public class QueryData {
                 "No document entry found for title '" + documentTitle + "' in " + fileName
         );
     }
+
+    /**
+     * Loads continuous context-retention conversations from
+     * src/test/resources/<fileName> (for example: context_retention_queries.json).
+     */
+    public static List<ContextConversation> getContextConversations(String fileName) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            InputStream inputStream = QueryData.class
+                    .getClassLoader()
+                    .getResourceAsStream(fileName);
+
+            if (inputStream == null) {
+                throw new RuntimeException("Could not find " + fileName + " in src/test/resources");
+            }
+
+            return mapper.readValue(inputStream, new TypeReference<List<ContextConversation>>() {
+            });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read " + fileName + ": " + e.getMessage(), e);
+        }
+    }
 }

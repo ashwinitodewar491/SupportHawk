@@ -1,9 +1,10 @@
-package com.supporthawk.tests.postlogin;
+package com.supporthawk.tests.fintech.postlogin;
 
 import com.supporthawk.base.BasePage;
-import com.supporthawk.customer.CustomerLoginHelper;
-import com.supporthawk.customer.CustomerQueryDataProvider;
-import com.supporthawk.customer.CustomerQueryRunner;
+import com.supporthawk.config.TenantRoutes;
+import com.supporthawk.fintech.customer.CustomerLoginHelper;
+import com.supporthawk.fintech.customer.CustomerQueryDataProvider;
+import com.supporthawk.fintech.customer.CustomerQueryRunner;
 import com.supporthawk.data.QueryModel;
 import com.supporthawk.pages.QueryPage;
 import org.testng.ITest;
@@ -17,7 +18,7 @@ import java.lang.reflect.Method;
 /**
  * Post-login customer text query tests using customer_queries.json.
  */
-public class CustomerLoginTextTest extends BasePage implements ITest {
+public class FintechCustomerLoginTextTest extends BasePage implements ITest {
 
     private final ThreadLocal<String> testName = new ThreadLocal<>();
 
@@ -56,7 +57,7 @@ public class CustomerLoginTextTest extends BasePage implements ITest {
     )
     public void verifyCustomerQueryResponse(QueryModel queryModel) {
         QueryPage queryPage = new QueryPage(page);
-        queryPage.navigate();
+        queryPage.navigate(TenantRoutes.Tenant.FINTECH);
         CustomerQueryRunner.executeTextQuery(queryPage, queryModel);
     }
 }
